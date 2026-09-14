@@ -85,7 +85,7 @@ export function StudyPlanner({ userId, firstName }: StudyPlannerProps) {
   }
 
   return (
-    <div className="grid items-start gap-8 lg:grid-cols-[400px_1fr]">
+    <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-8 lg:grid-cols-[400px_minmax(0,1fr)]">
       <form
         onSubmit={(event) => {
           event.preventDefault();

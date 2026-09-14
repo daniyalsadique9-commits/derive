@@ -27,6 +27,9 @@ export function coolDownFor(error: unknown): number {
     }
   }
   switch (statusOf(error)) {
+    case 400:
+    case 413:
+      return 0; // a problem with this request, not with the key
     case 429:
       return 60_000; // rate limited
     case 401:

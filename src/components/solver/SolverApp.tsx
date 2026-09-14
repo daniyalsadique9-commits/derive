@@ -273,6 +273,7 @@ export function SolverApp({ userId, firstName, isAdmin }: SolverAppProps) {
                       key={message.id}
                       message={message}
                       isLatest={index === conversation.messages.length - 1}
+                      showModel={isAdmin}
                       onAction={handleAction}
                       onRetry={() => retry(message.id)}
                     />

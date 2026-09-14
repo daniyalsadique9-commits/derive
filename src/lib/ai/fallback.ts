@@ -67,6 +67,9 @@ export function geminiAttempts({
 }): Attempt[] {
   const { keys, models } = aiConfig.gemini;
   const contents = toGeminiContents(turns);
+  const hasPdf = turns.some((turn) =>
+    turn.images?.some((file) => file.mimeType === "application/pdf"),
+  );
   return models.flatMap((model) =>
     orderedSlots("gemini", model, keys.length).map((slot) => ({
       slot,
@@ -76,6 +79,7 @@ export function geminiAttempts({
           model: slot.model,
           contents,
           systemInstruction: system,
+          codeExecution: !hasPdf,
           signal,
         }),
     })),

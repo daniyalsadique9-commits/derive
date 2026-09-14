@@ -185,7 +185,7 @@ export function AdminPanel({ initialState }: { initialState: AdminState }) {
         />
       </div>
 
-      <div className="grid items-start gap-6 lg:grid-cols-[1.1fr_1fr]">
+      <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-6 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]">
         <section className="rounded-2xl border border-line bg-surface p-6">
           <h2 className="font-serif text-xl font-semibold">Controls</h2>
           <ul className="mt-5 divide-y divide-line">

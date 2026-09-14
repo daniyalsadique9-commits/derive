@@ -31,6 +31,8 @@ interface GeminiStreamOptions {
   model: string;
   contents: Content[];
   systemInstruction: string;
+  /** Gemini rejects PDF input when code execution is on, so it is off for PDF conversations. */
+  codeExecution: boolean;
   signal: AbortSignal;
 }
 
@@ -44,7 +46,7 @@ export async function* streamGemini(options: GeminiStreamOptions): AsyncGenerato
     contents: options.contents,
     config: {
       systemInstruction: options.systemInstruction,
-      tools: [{ codeExecution: {} }],
+      ...(options.codeExecution && { tools: [{ codeExecution: {} }] }),
       // Thought summaries arrive early, which tells us the model is alive while it reasons.
       thinkingConfig: { thinkingLevel: ThinkingLevel.MEDIUM, includeThoughts: true },
       abortSignal: options.signal,

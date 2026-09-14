@@ -21,6 +21,34 @@ import { VerificationBadge, VerificationPending } from "./VerificationBadge";
 type CodeBlock = Extract<Block, { kind: "code" }>;
 type ContentBlock = Exclude<Block, CodeBlock>;
 
+const FINAL_ANSWER_HEADING = /^##\s+Final answer/im;
+
+/**
+ * Graphs are often drawn before the model starts writing. Rather than sitting above the
+ * question, they go just before the final answer (or after the text while it streams).
+ */
+function arrangeContent(content: ContentBlock[]): ContentBlock[] {
+  const firstText = content.findIndex((block) => block.kind === "text");
+  if (firstText <= 0) return content;
+
+  const leadingImages = content.slice(0, firstText);
+  const rest = content.slice(firstText);
+  const target = rest.findIndex(
+    (block) => block.kind === "text" && FINAL_ANSWER_HEADING.test(block.text),
+  );
+  if (target === -1) return [...rest, ...leadingImages];
+
+  const { text } = rest[target] as Extract<ContentBlock, { kind: "text" }>;
+  const split = text.search(FINAL_ANSWER_HEADING);
+  return [
+    ...rest.slice(0, target),
+    { kind: "text", text: text.slice(0, split) },
+    ...leadingImages,
+    { kind: "text", text: text.slice(split) },
+    ...rest.slice(target + 1),
+  ];
+}
+
 /** Progress text shown until the first words of the answer arrive. */
 function progressLabel(message: AssistantMessage): string | null {
   if (message.blocks.some((block) => block.kind === "text")) return null;
@@ -147,16 +175,20 @@ function useElapsedSeconds(active: boolean): number {
 interface AnswerViewProps {
   message: AssistantMessage;
   isLatest: boolean;
+  /** Shows which model wrote the answer and its token count; for admins only. */
+  showModel: boolean;
   onAction: (action: AnswerAction) => void;
   onRetry: () => void;
 }
 
-export function AnswerView({ message, isLatest, onAction, onRetry }: AnswerViewProps) {
+export function AnswerView({ message, isLatest, showModel, onAction, onRetry }: AnswerViewProps) {
   const streaming = isAnswerStreaming(message);
   const elapsed = useElapsedSeconds(streaming);
   const progress = streaming ? progressLabel(message) : null;
   const finished = message.phase === "done";
-  const content = message.blocks.filter((block): block is ContentBlock => block.kind !== "code");
+  const content = arrangeContent(
+    message.blocks.filter((block): block is ContentBlock => block.kind !== "code"),
+  );
   const calculations = message.blocks.filter((block): block is CodeBlock => block.kind === "code");
 
   return (
@@ -205,7 +237,7 @@ export function AnswerView({ message, isLatest, onAction, onRetry }: AnswerViewP
           <div className="flex flex-wrap items-center gap-x-3 gap-y-2 pt-1">
             {isLatest && <ActionBar onAction={onAction} />}
             <div className="ml-auto flex items-center gap-2">
-              {message.model && (
+              {showModel && message.model && (
                 <span className="text-xs text-ink-muted">
                   {shortModelName(message.model)}
                   {message.totalTokens

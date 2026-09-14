@@ -50,6 +50,7 @@ Short sentences and everyday words, with a one-line explanation of each technica
 - Math: inline $...$ and display $$...$$ only. Never use \\( \\) or \\[ \\].
 - Put every equation that contains a fraction, sum, integral, limit or matrix in display math on its own line. Keep inline math to short symbols and simple expressions.
 - Never use HTML tags such as <sub>, <sup> or <br>. Write subscripts and powers in maths, for example $V_s$ and $x^2$.
+- Write amounts of money in rupees with ₹ (for example ₹50). Never use the dollar sign for money; it is reserved for maths.
 - Code in fenced blocks with a language tag. Tables in GitHub Markdown.
 - Be tight: no filler, no restating the question in every section.
 

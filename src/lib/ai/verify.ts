@@ -80,7 +80,9 @@ function toVerification(verdict: Verdict, checker: string): Verification {
 
 /**
  * Asks a different model to solve the question independently and compare final answers.
- * Two unrelated models agreeing is strong evidence; disagreement is flagged to the student.
+ * Two unrelated models agreeing is strong evidence. A disagreement is only flagged to the
+ * student when a second checker model also disagrees, since one checker is often the one
+ * that is wrong.
  */
 export async function verifyAnswer(
   answerMarkdown: string,
@@ -99,8 +101,13 @@ export async function verifyAnswer(
     return { status: "skipped", reason: "No numeric result to cross-check." };
   }
 
-  for (const slot of checkerSlots().slice(0, MAX_CHECK_ATTEMPTS)) {
-    if (signal.aborted) break;
+  let attempts = 0;
+  // Asserted rather than annotated so the type isn't narrowed to null inside the loop.
+  let disagreement = null as { verdict: Verdict; checker: string } | null;
+  for (const slot of checkerSlots()) {
+    if (signal.aborted || attempts >= MAX_CHECK_ATTEMPTS) break;
+    if (disagreement?.checker === slot.model) continue;
+    attempts += 1;
     quota.recordRequest(slot);
     try {
       const reply = await completeGroq({
@@ -115,13 +122,20 @@ export async function verifyAnswer(
         onHeaders: (headers) => quota.recordHeaders(slot, headers),
       });
       const verdict = parseVerdict(reply);
-      if (verdict) return toVerification(verdict, slot.model);
-      console.warn(`[verify] ${slot.model} gave an unreadable reply`);
+      if (!verdict) {
+        console.warn(`[verify] ${slot.model} gave an unreadable reply`);
+      } else if (verdict.verdict !== "disagree" || disagreement) {
+        return toVerification(verdict, slot.model);
+      } else {
+        disagreement = { verdict, checker: slot.model };
+      }
     } catch (error) {
       quota.coolDown(slot, coolDownFor(error));
       console.warn(`[verify] ${slot.model} #${slot.keyIndex + 1}: ${describeError(error)}`);
     }
   }
 
-  return { status: "skipped", reason: "The checker models are busy right now." };
+  return disagreement
+    ? { status: "skipped", reason: "The checkers could not confirm this result." }
+    : { status: "skipped", reason: "The checker models are busy right now." };
 }

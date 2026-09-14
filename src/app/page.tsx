@@ -70,7 +70,7 @@ const VERIFICATION_STEPS: Feature[] = [
   {
     icon: Scale,
     title: "Independent check",
-    body: "A second model solves the question separately. If the results differ, the answer is flagged for review.",
+    body: "A second model solves the question separately. An answer is flagged for review only when a third model also reaches a different result.",
   },
 ];
 

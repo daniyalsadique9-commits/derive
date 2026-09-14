@@ -38,7 +38,8 @@ export function Segmented<T extends string>({
           aria-checked={value === option.value}
           onClick={() => onChange(option.value)}
           className={cn(
-            "flex-1 rounded-md font-medium whitespace-nowrap transition-colors",
+            // Labels may wrap so a row of options still fits on narrow phones.
+            "min-w-0 flex-1 rounded-md leading-tight font-medium text-balance transition-colors",
             size === "sm" ? "px-2 py-1 text-xs" : "px-3 py-1.5 text-sm",
             value === option.value
               ? "bg-surface text-ink shadow-sm"

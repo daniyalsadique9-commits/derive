@@ -43,7 +43,7 @@ export function VerificationBadge({ result }: { result: Verification }) {
         Needs review
       </p>
       <p>
-        An independent check reached a different result:{" "}
+        Two independent checks reached a different result:{" "}
         <strong>
           <InlineMarkdown text={truncate(result.independentAnswer)} />
         </strong>
