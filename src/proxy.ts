@@ -1,6 +1,6 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 
-const isProtectedPage = createRouteMatcher(["/solve(.*)", "/plan(.*)", "/admin(.*)"]);
+const isProtectedPage = createRouteMatcher(["/solve(.*)", "/plan(.*)", "/viva(.*)", "/admin(.*)"]);
 
 // API routes check auth themselves so they can answer with JSON instead of a redirect.
 export default clerkMiddleware(async (auth, request) => {

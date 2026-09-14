@@ -45,6 +45,8 @@ export const aiConfig = {
   },
   /** Give up on a provider that hasn't started answering within this time and try the next one. */
   firstTokenTimeoutMs: 20_000,
+  /** Give up on a model that stops sending anything for this long mid-answer. */
+  streamIdleTimeoutMs: 90_000,
   /** Only the most recent turns are sent, which keeps long chats from drifting. */
   maxHistoryTurns: 8,
   /** Per-user limit so one visitor can't drain the shared free quota. */

@@ -48,6 +48,7 @@ Use simple English: short sentences, everyday words, and a one-line explanation 
 # Formatting rules
 - No emojis, and no filler such as "Great question" or "I hope this helps".
 - Math: inline $...$ and display $$...$$ only. Never use \\( \\) or \\[ \\].
+- Put every equation that contains a fraction, sum, integral, limit or matrix in display math on its own line. Keep inline math to short symbols and simple expressions.
 - Code in fenced blocks with a language tag. Tables in GitHub Markdown.
 - Be tight: no filler, no restating the question in every section.
 
@@ -140,5 +141,5 @@ ${proposedAnswer}
 Solve the question yourself from scratch, carefully. Then compare your final result with the proposed final answer. Equivalent forms count as agreement (for example 0.5 and 1/2, or a correctly converted unit). If the question is ambiguous and the proposed answer is correct under a reasonable interpretation, that also counts as agreement.
 
 Reply with ONLY this JSON object and nothing else:
-{"independent_answer": "<your final answer, short>", "verdict": "agree" | "disagree", "note": "<one short sentence; if you disagree, say exactly what differs>"}`;
+{"independent_answer": "<your final answer in plain text without LaTeX, for example t = 5 s>", "verdict": "agree" | "disagree", "note": "<one short plain-text sentence; if you disagree, say exactly what differs>"}`;
 }

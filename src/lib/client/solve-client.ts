@@ -1,6 +1,21 @@
 import type { StreamEvent } from "@/lib/ai/events";
 import type { PlanRequest } from "@/lib/ai/plan-schema";
 import type { SolveRequest } from "@/lib/ai/schema";
+import type { VivaRequest } from "@/lib/ai/viva-schema";
+
+interface ClerkBrowser {
+  Clerk?: { session?: { getToken: (options: { skipCache: boolean }) => Promise<string | null> } };
+}
+
+/** Asks the Clerk browser SDK for a fresh session token; it updates the session cookie. */
+async function refreshSession(): Promise<boolean> {
+  try {
+    const clerk = (window as unknown as ClerkBrowser).Clerk;
+    return Boolean(await clerk?.session?.getToken({ skipCache: true }));
+  } catch {
+    return false;
+  }
+}
 
 /** Posts JSON and calls `onEvent` for each NDJSON event as it streams in. */
 async function postForEvents(
@@ -9,12 +24,17 @@ async function postForEvents(
   onEvent: (event: StreamEvent) => void,
   signal: AbortSignal,
 ): Promise<void> {
-  const response = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-    signal,
-  });
+  const send = () =>
+    fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+      signal,
+    });
+
+  let response = await send();
+  // Session tokens are short-lived; if one expired between refreshes, renew it and retry once.
+  if (response.status === 401 && (await refreshSession())) response = await send();
 
   if (!response.ok || !response.body) {
     const data = (await response.json().catch(() => null)) as { error?: string } | null;
@@ -50,4 +70,12 @@ export function streamPlan(
   signal: AbortSignal,
 ): Promise<void> {
   return postForEvents("/api/plan", request, onEvent, signal);
+}
+
+export function streamViva(
+  request: VivaRequest,
+  onEvent: (event: StreamEvent) => void,
+  signal: AbortSignal,
+): Promise<void> {
+  return postForEvents("/api/viva", request, onEvent, signal);
 }

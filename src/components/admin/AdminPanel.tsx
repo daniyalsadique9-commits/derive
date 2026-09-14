@@ -24,7 +24,7 @@ const STATUS_LABELS: Record<ProviderStatus, string> = {
 };
 
 const TOGGLES: {
-  key: "maintenance" | "verification" | "uploads" | "studyPlans";
+  key: "maintenance" | "verification" | "uploads" | "studyPlans" | "vivaQuestions";
   label: string;
   hint: string;
 }[] = [
@@ -40,6 +40,11 @@ const TOGGLES: {
   },
   { key: "uploads", label: "Photo and PDF uploads", hint: "Allow questions with attachments." },
   { key: "studyPlans", label: "Study plans", hint: "Allow students to create study plans." },
+  {
+    key: "vivaQuestions",
+    label: "Viva questions",
+    hint: "Allow students to generate viva question sets.",
+  },
 ];
 
 const LIMITS: {

@@ -6,7 +6,7 @@ export type AccessDecision = { ok: true } | { ok: false; status: number; error: 
 
 interface AccessRequest {
   userId: string;
-  feature: "solve" | "plan";
+  feature: "solve" | "plan" | "viva";
   hasUploads?: boolean;
 }
 
@@ -28,6 +28,9 @@ export async function checkAccess({
   }
   if (feature === "plan" && !settings.studyPlans) {
     return deny(403, "Study plans are turned off right now.");
+  }
+  if (feature === "viva" && !settings.vivaQuestions) {
+    return deny(403, "Viva question sets are turned off right now.");
   }
   if (hasUploads && !settings.uploads) {
     return deny(403, "Photo and PDF uploads are turned off right now.");

@@ -6,7 +6,18 @@ import type { ChatTurn, SolveRequest } from "./schema";
 import { verifyAnswer } from "./verify";
 
 const GRAPH_REQUEST = /\b(plot|graph|sketch|draw|visuali[sz]e|curve)\b/i;
-const HEAVY_QUESTION = /\b(prove|derive|show that)\b/i;
+const PROOF_REQUEST = /\b(prove|derive|show that)\b/i;
+
+/**
+ * Groq's free tier allows about 8,000 tokens per request, answer included, so long
+ * conversations go to Gemini first.
+ */
+const LONG_CONTEXT_CHARS = 12_000;
+
+/** Long, multi-part questions and proofs: they need a larger output budget and aren't cross-checked. */
+function isLongDerivation(content: string): boolean {
+  return content.length > 500 || PROOF_REQUEST.test(content);
+}
 
 /** Keeps recent turns only, starting on a user turn, with attachments on the latest turn only. */
 function recentTurns(messages: ChatTurn[]): ChatTurn[] {
@@ -37,11 +48,13 @@ function planAttempts(turns: ChatTurn[], request: SolveRequest): Attempt[] {
     }),
     turns,
     runCode: true,
-    reasoningEffort: "high",
+    // Follow-up actions (practice, simplify, ...) don't need deep reasoning.
+    reasoningEffort: (latest?.intent ?? "ask") === "ask" ? "high" : "medium",
   });
   const content = latest?.content ?? "";
+  const contextChars = turns.reduce((sum, turn) => sum + turn.content.length, 0);
   const geminiFirst =
-    GRAPH_REQUEST.test(content) || content.length > 500 || HEAVY_QUESTION.test(content);
+    GRAPH_REQUEST.test(content) || isLongDerivation(content) || contextChars > LONG_CONTEXT_CHARS;
   return geminiFirst ? [...gemini, ...groq] : [...groq, ...gemini];
 }
 
@@ -55,8 +68,10 @@ export async function* solve(
   const answer = yield* streamFirstAvailable(planAttempts(turns, request), signal);
   if (answer === null) return;
 
-  const latestIntent = turns[turns.length - 1]?.intent ?? "ask";
-  if (options.verify && latestIntent === "ask") {
+  const latest = turns[turns.length - 1];
+  // A short check can't reliably re-solve a long proof, and a false alarm is worse than none.
+  const checkable = (latest?.intent ?? "ask") === "ask" && !isLongDerivation(latest?.content ?? "");
+  if (options.verify && checkable) {
     yield { type: "verifying" };
     yield { type: "verification", result: await verifyAnswer(answer, signal) };
   }

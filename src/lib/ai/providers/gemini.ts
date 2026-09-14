@@ -46,7 +46,7 @@ export async function* streamGemini(options: GeminiStreamOptions): AsyncGenerato
       systemInstruction: options.systemInstruction,
       tools: [{ codeExecution: {} }],
       // Thought summaries arrive early, which tells us the model is alive while it reasons.
-      thinkingConfig: { thinkingLevel: ThinkingLevel.HIGH, includeThoughts: true },
+      thinkingConfig: { thinkingLevel: ThinkingLevel.MEDIUM, includeThoughts: true },
       abortSignal: options.signal,
     },
   });

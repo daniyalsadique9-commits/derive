@@ -1,5 +1,5 @@
 import { aiConfig } from "./config";
-import { coolDownFor, describeError, FirstTokenTimeoutError } from "./errors";
+import { coolDownFor, describeError, ResponseTimeoutError } from "./errors";
 import type { StreamEvent } from "./events";
 import { renderTurnText } from "./prompts";
 import { streamGemini, toGeminiContents } from "./providers/gemini";
@@ -87,7 +87,7 @@ function withTimeout<T>(promise: Promise<T>, ms: number, onTimeout: () => void):
   const timeout = new Promise<never>((_, reject) => {
     timer = setTimeout(() => {
       onTimeout();
-      reject(new FirstTokenTimeoutError(ms));
+      reject(new ResponseTimeoutError(ms));
     }, ms);
   });
   return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
@@ -103,6 +103,7 @@ export async function* streamFirstAvailable(
   signal: AbortSignal,
 ): AsyncGenerator<StreamEvent, string | null> {
   let producedNothing = false;
+  let unavailable = false;
 
   for (const attempt of attempts) {
     if (signal.aborted) return null;
@@ -120,6 +121,7 @@ export async function* streamFirstAvailable(
       attemptController.abort();
       if (signal.aborted) return null;
       quota.coolDown(attempt.slot, coolDownFor(error));
+      unavailable = true;
       console.warn(
         `[fallback] ${attempt.slot.model} #${attempt.slot.keyIndex + 1}: ${describeError(error)}`,
       );
@@ -129,7 +131,14 @@ export async function* streamFirstAvailable(
     yield { type: "start", provider: attempt.slot.provider, model: attempt.slot.model };
     let text = "";
     try {
-      for (let result = first; !result.done; result = await events.next()) {
+      // A model that goes silent mid-answer is abandoned rather than left hanging.
+      for (
+        let result = first;
+        !result.done;
+        result = await withTimeout(events.next(), aiConfig.streamIdleTimeoutMs, () =>
+          attemptController.abort(),
+        )
+      ) {
         if (result.value.type === "text") text += result.value.text;
         yield result.value;
       }
@@ -153,7 +162,10 @@ export async function* streamFirstAvailable(
   }
 
   if (!signal.aborted) {
-    yield { type: "error", message: producedNothing ? TOO_LONG_MESSAGE : ALL_BUSY_MESSAGE };
+    yield {
+      type: "error",
+      message: producedNothing && !unavailable ? TOO_LONG_MESSAGE : ALL_BUSY_MESSAGE,
+    };
   }
   return null;
 }

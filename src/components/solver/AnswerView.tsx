@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { Check, ChevronRight, Copy, Loader2, RotateCcw, TriangleAlert } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { LogoMark } from "@/components/brand/Logo";
 import { Markdown } from "@/components/markdown/Markdown";
 import { stripComments, toRenderableMarkdown } from "@/lib/client/answer-text";
@@ -127,6 +127,23 @@ function ActionBar({ onAction }: { onAction: (action: AnswerAction) => void }) {
   );
 }
 
+/** Seconds since `active` first became true, updated every second while it stays true. */
+function useElapsedSeconds(active: boolean): number {
+  const startedAt = useRef<number | null>(null);
+  const [elapsed, setElapsed] = useState(0);
+
+  useEffect(() => {
+    if (!active) return;
+    startedAt.current ??= Date.now();
+    const timer = setInterval(() => {
+      setElapsed(Math.round((Date.now() - (startedAt.current ?? Date.now())) / 1000));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [active]);
+
+  return elapsed;
+}
+
 interface AnswerViewProps {
   message: AssistantMessage;
   isLatest: boolean;
@@ -136,6 +153,7 @@ interface AnswerViewProps {
 
 export function AnswerView({ message, isLatest, onAction, onRetry }: AnswerViewProps) {
   const streaming = isAnswerStreaming(message);
+  const elapsed = useElapsedSeconds(streaming);
   const progress = streaming ? progressLabel(message) : null;
   const finished = message.phase === "done";
   const content = message.blocks.filter((block): block is ContentBlock => block.kind !== "code");
@@ -146,10 +164,16 @@ export function AnswerView({ message, isLatest, onAction, onRetry }: AnswerViewP
       <LogoMark className="mt-0.5 hidden size-7 rounded-md sm:grid" />
       <div className="min-w-0 flex-1 space-y-4">
         {progress && (
-          <p className="flex items-center gap-2 text-sm text-ink-muted">
-            <Loader2 className="size-4 animate-spin" />
-            {progress}
-          </p>
+          <div className="text-sm text-ink-muted">
+            <p className="flex h-8 items-center gap-2">
+              <Loader2 className="size-4 animate-spin" />
+              {progress}
+              {elapsed >= 3 && <span className="tabular-nums">{elapsed}s</span>}
+            </p>
+            {elapsed >= 30 && (
+              <p className="pl-6 text-xs">Long, multi-part questions can take up to two minutes.</p>
+            )}
+          </div>
         )}
 
         {content.map((block, index) => (

@@ -5,6 +5,7 @@ import { UserButton } from "@clerk/nextjs";
 import {
   BookOpen,
   CalendarRange,
+  ListChecks,
   Plus,
   Search,
   SlidersHorizontal,
@@ -222,14 +223,24 @@ export function Sidebar({
         <div className="space-y-1 border-t border-line p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
           <Link
             href="/plan"
+            prefetch={false}
             className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm text-ink-muted transition-colors hover:bg-subtle hover:text-ink"
           >
             <CalendarRange className="size-4" />
             Study plan
           </Link>
+          <Link
+            href="/viva"
+            prefetch={false}
+            className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm text-ink-muted transition-colors hover:bg-subtle hover:text-ink"
+          >
+            <ListChecks className="size-4" />
+            Viva questions
+          </Link>
           {isAdmin && (
             <Link
               href="/admin"
+              prefetch={false}
               className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm text-ink-muted transition-colors hover:bg-subtle hover:text-ink"
             >
               <SlidersHorizontal className="size-4" />

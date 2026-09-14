@@ -1,10 +1,10 @@
 import { ApiError as GeminiApiError } from "@google/genai";
 import OpenAI from "openai";
 
-export class FirstTokenTimeoutError extends Error {
+export class ResponseTimeoutError extends Error {
   constructor(ms: number) {
     super(`No response within ${ms} ms`);
-    this.name = "FirstTokenTimeoutError";
+    this.name = "ResponseTimeoutError";
   }
 }
 
@@ -39,7 +39,7 @@ export function coolDownFor(error: unknown): number {
     case 504:
       return 30_000; // provider overloaded
     default:
-      return error instanceof FirstTokenTimeoutError ? 30_000 : 15_000;
+      return error instanceof ResponseTimeoutError ? 30_000 : 15_000;
   }
 }
 

@@ -11,6 +11,8 @@ const CHECK_TIMEOUT_MS = 30_000;
 const CHECK_MAX_TOKENS = 800;
 const CHECK_ESTIMATED_TOKENS = 1500;
 const MAX_CHECK_ATTEMPTS = 3;
+/** Longer final answers are multi-part results that one short check can't re-solve reliably. */
+const MAX_CHECKABLE_ANSWER_CHARS = 200;
 
 const verdictSchema = z.object({
   independent_answer: z.string(),
@@ -83,6 +85,9 @@ export async function verifyAnswer(
   const question = extractSection(answerMarkdown, "Question");
   if (!finalAnswer || !question) {
     return { status: "skipped", reason: "No single final answer to cross-check." };
+  }
+  if (finalAnswer.length > MAX_CHECKABLE_ANSWER_CHARS) {
+    return { status: "skipped", reason: "Multi-part answers are not cross-checked." };
   }
 
   for (const slot of checkerSlots().slice(0, MAX_CHECK_ATTEMPTS)) {
