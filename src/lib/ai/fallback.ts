@@ -29,7 +29,7 @@ interface GroqAttemptOptions {
   system: string;
   turns: ChatTurn[];
   runCode: boolean;
-  reasoningEffort: "medium" | "high";
+  reasoningEffort: "low" | "medium" | "high";
 }
 
 export function groqAttempts({

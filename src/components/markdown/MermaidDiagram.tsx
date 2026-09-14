@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useId, useState } from "react";
-import { quoteMermaidLabels } from "@/lib/client/mermaid-source";
+import { prepareMermaid } from "@/lib/client/mermaid-source";
 
 type RenderState = { status: "pending" } | { status: "ready"; svg: string } | { status: "failed" };
 
@@ -23,7 +23,7 @@ export function MermaidDiagram({ source, ready }: MermaidDiagramProps) {
     async function render() {
       const mermaid = (await import("mermaid")).default;
       mermaid.initialize({ startOnLoad: false, securityLevel: "strict", theme: "neutral" });
-      const diagram = quoteMermaidLabels(source);
+      const diagram = prepareMermaid(source);
       try {
         if (!(await mermaid.parse(diagram, { suppressErrors: true }))) throw new Error("Invalid");
         const { svg } = await mermaid.render(id, diagram);

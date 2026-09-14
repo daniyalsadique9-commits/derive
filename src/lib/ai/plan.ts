@@ -12,6 +12,9 @@ const RATING_WEIGHT: Record<SelfRating, number> = { weak: 1.5, average: 1, stron
 /** Share of the total time kept for final revision and previous-year papers. */
 const REVISION_SHARE = 0.15;
 
+/** Courses × weeks above which a plan goes to the model with the larger output budget first. */
+const LARGE_PLAN_CELLS = 60;
+
 const PLAN_SYSTEM_PROMPT = `You are an experienced academic mentor for first-year B.Tech students in India. Create a personalised, realistic study plan using only the syllabus provided.
 
 Use these Markdown sections in this order:
@@ -20,20 +23,21 @@ Use these Markdown sections in this order:
 Copy the time allocation table provided, unchanged. Below it, write one sentence explaining the split: time follows each course's syllabus hours, weaker courses get more, and part of the time is kept for final revision.
 
 ## Week-by-week plan
-One table with columns: Week | Course | Units and topics | Tasks | Checkpoint. Use the week labels provided and cover every unit of every selected course. Each course's total time across the weeks should match its study hours in the allocation. Schedule weaker courses and difficult topics earlier and give them more sessions. Keep the final week (or the last 15% of the time) for revision and previous-year papers.
-- Tasks must be concrete and measurable, for example "Solve 15 problems on rank and consistency (Grewal)" or "Write the aim, formula and precautions of the Newton's rings experiment". Never write vague tasks such as "study unit 1" or "revise".
+One table with exactly one row per week and columns: Week | Focus | Tasks | Checkpoint. Use the week labels provided and cover every unit of every selected course across the weeks. Focus names that week's courses and units with hours, for example "Maths U1 (4 h), Physics U2 (3 h)". Each course's total hours across the weeks should match the allocation. Schedule weaker courses and difficult topics earlier. Keep the final week (or the last 15% of the time) for revision and previous-year papers.
+- Tasks: two or three concrete, measurable tasks, for example "Solve 15 rank and consistency problems (Grewal)". Never vague tasks such as "study unit 1" or "revise".
 - Checkpoint: one short question the student should be able to answer at the end of that week.
 
 ## Course strategies
-One short subsection per course (### Course title): the topics that need the most practice, how to practise them, common mistakes, and the most useful reference book from the syllabus.
+One subsection per course (### Course title) with at most three bullets: what to practise most, a common mistake to avoid, and the most useful reference book from the syllabus.
 
 ## Personal advice
 Three to five specific points based on the student's goal, self-ratings, difficult topics and recent questions. Name those topics and say in which week the plan handles them.
 
 ## Revision checklist
-A checklist (- [ ] item) of the key topics for each course.
+A checklist (- [ ] item) with three to five key topics per course.
 
 Rules:
+- Keep the whole plan compact so it fits in one response.
 - Use only units and topics from the syllabus provided, with the syllabus unit names.
 - Do not include a daily timetable or an hour-by-hour routine.
 - Use short sentences and everyday words, in the answer language given below.
@@ -148,10 +152,13 @@ export async function* generatePlan(
 ): AsyncGenerator<StreamEvent> {
   const system = `${PLAN_SYSTEM_PROMPT}\n\n${languageInstruction(request.language)}`;
   const turns = [{ role: "user" as const, content: buildPlanPrompt(request) }];
-  const attempts = [
-    ...groqAttempts({ system, turns, runCode: false, reasoningEffort: "medium" }),
-    ...geminiAttempts({ system, turns }),
-  ];
-  const plan = yield* streamFirstAvailable(attempts, signal);
+  const groq = groqAttempts({ system, turns, runCode: false, reasoningEffort: "low" });
+  const gemini = geminiAttempts({ system, turns });
+  // Very large plans can exceed Groq's per-request output budget; Gemini's is much larger.
+  const large = request.courses.length * request.weeks > LARGE_PLAN_CELLS;
+  const plan = yield* streamFirstAvailable(
+    large ? [...gemini, ...groq] : [...groq, ...gemini],
+    signal,
+  );
   if (plan !== null) yield { type: "done" };
 }

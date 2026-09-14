@@ -33,7 +33,7 @@ Two or three bullets of errors students often make on this type of problem.
 One or two bullets linking this concept to other subjects.
 
 ## Concept map
-Only when it genuinely helps: a small Mermaid diagram in a \`\`\`mermaid code block. Use \`flowchart TD\`, at most 8 nodes, and short labels in double quotes, like A["Force"] --> B["Acceleration (a = F/m)"].
+Only when it genuinely helps: a small Mermaid diagram in a \`\`\`mermaid code block. Use \`flowchart TD\`, at most 8 nodes, and short labels in double quotes, like A["Force"] --> B["Acceleration (a = F/m)"]. Labels are plain text: no LaTeX, dollar signs, backslashes or underscores.
 
 After the whole answer to a new question, add one final line exactly in this form, and nothing after it:
 <!-- topic: Subject | Topic -->
@@ -49,6 +49,7 @@ Short sentences and everyday words, with a one-line explanation of each technica
 - No emojis, and no filler such as "Great question" or "I hope this helps".
 - Math: inline $...$ and display $$...$$ only. Never use \\( \\) or \\[ \\].
 - Put every equation that contains a fraction, sum, integral, limit or matrix in display math on its own line. Keep inline math to short symbols and simple expressions.
+- Never use HTML tags such as <sub>, <sup> or <br>. Write subscripts and powers in maths, for example $V_s$ and $x^2$.
 - Code in fenced blocks with a language tag. Tables in GitHub Markdown.
 - Be tight: no filler, no restating the question in every section.
 
@@ -145,8 +146,10 @@ Proposed final answer:
 ${proposedAnswer}
 """
 
-Solve the question yourself from scratch, carefully. Then compare your final result with the proposed final answer. Equivalent forms count as agreement (for example 0.5 and 1/2, or a correctly converted unit). If the question is ambiguous and the proposed answer is correct under a reasonable interpretation, that also counts as agreement.
+If the question mainly asks for an explanation, method, procedure, definition, derivation or proof rather than one specific result, reply with the verdict "not_applicable".
+
+Otherwise, solve the question yourself from scratch, carefully, and compare your final result with the proposed final answer. Equivalent forms count as agreement (for example 0.5 and 1/2, a correctly converted unit, or a value rounded differently). If the question is ambiguous and the proposed answer is correct under a reasonable interpretation, that also counts as agreement. Only say "disagree" when you are confident the proposed result is wrong.
 
 Reply with ONLY this JSON object and nothing else:
-{"independent_answer": "<your final answer in plain text without LaTeX, for example t = 5 s>", "verdict": "agree" | "disagree", "note": "<one short plain-text sentence; if you disagree, say exactly what differs>"}`;
+{"independent_answer": "<your final answer in plain text without LaTeX, for example t = 5 s>", "verdict": "agree" | "disagree" | "not_applicable", "note": "<one short plain-text sentence; if you disagree, say exactly what differs>"}`;
 }

@@ -65,7 +65,7 @@ export async function* generateViva(
   const system = `${VIVA_SYSTEM_PROMPT}\n\n${languageInstruction(request.language)}`;
   const turns = [{ role: "user" as const, content: buildVivaPrompt(course, request) }];
   const attempts = [
-    ...groqAttempts({ system, turns, runCode: false, reasoningEffort: "medium" }),
+    ...groqAttempts({ system, turns, runCode: false, reasoningEffort: "low" }),
     ...geminiAttempts({ system, turns }),
   ];
   const questions = yield* streamFirstAvailable(attempts, signal);

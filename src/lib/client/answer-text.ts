@@ -4,6 +4,13 @@ const HTML_COMMENTS = /<!--[\s\S]*?(?:-->|$)/g;
 const CODE_FENCES = /(```[\s\S]*?(?:```|$))/g;
 /** A `$$…$$` equation alone on one line; Markdown only renders it as display maths on its own lines. */
 const ONE_LINE_DISPLAY_MATH = /^([ \t]*)\$\$([^\n]+?)\$\$[ \t]*$/gm;
+/** `V<sub>s</sub>` or `10<sup>-34</sup>`, with the word the script belongs to. */
+const HTML_SCRIPT = /([\p{L}\p{N}]*)<(sub|sup)>([^<>]{1,40})<\/\2>/gu;
+const HTML_FORMATTING: [RegExp, string][] = [
+  [/<br\s*\/?>/gi, "  \n"],
+  [/<\/?(?:b|strong)>/gi, "**"],
+  [/<\/?(?:i|em)>/gi, "*"],
+];
 
 /** Reads the `<!-- topic: Subject | Topic -->` line the model appends to new answers. */
 export function extractTopic(text: string): { subject: string; topic: string } | null {
@@ -17,8 +24,30 @@ export function stripComments(text: string): string {
   return text.replace(HTML_COMMENTS, "").trimEnd();
 }
 
+/** Text for use inside LaTeX: numbers and single letters stay as maths, words become upright. */
+function latexText(value: string): string {
+  const safe = value.replace(/[\\{}$&#%_^~]/g, "").replace(/−/g, "-");
+  return /^[\d.+-]*$/.test(safe) || [...safe].length <= 1 ? safe : `\\text{${safe}}`;
+}
+
+/**
+ * Markdown shows raw HTML literally, and models sometimes write it anyway. Sub- and
+ * superscripts become maths; bold, italic and line breaks become Markdown.
+ */
+function convertHtml(segment: string): string {
+  const scripted = segment.replace(
+    HTML_SCRIPT,
+    (_, base: string, tag: string, script: string) =>
+      `$${base ? latexText(base) : "{}"}${tag === "sub" ? "_" : "^"}{${latexText(script.trim())}}$`,
+  );
+  return HTML_FORMATTING.reduce(
+    (text, [pattern, replacement]) => text.replace(pattern, replacement),
+    scripted,
+  );
+}
+
 function normalizeMath(segment: string): string {
-  return segment
+  return convertHtml(segment)
     .replace(/\\\[([\s\S]+?)\\\]/g, (_, math: string) => `$$${math}$$`)
     .replace(/\\\(([\s\S]+?)\\\)/g, (_, math: string) => `$${math}$`)
     .replace(
@@ -28,8 +57,8 @@ function normalizeMath(segment: string): string {
 }
 
 /**
- * Converts \( \) and \[ \] delimiters to $ and $$, and puts one-line display equations on
- * their own lines, leaving code blocks untouched.
+ * Converts \( \) and \[ \] delimiters to $ and $$, puts one-line display equations on their
+ * own lines and replaces stray HTML, leaving code blocks untouched.
  */
 function normalizeMathDelimiters(text: string): string {
   return text

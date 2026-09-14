@@ -16,7 +16,7 @@ const MAX_CHECKABLE_ANSWER_CHARS = 200;
 
 const verdictSchema = z.object({
   independent_answer: z.string(),
-  verdict: z.enum(["agree", "disagree"]),
+  verdict: z.enum(["agree", "disagree", "not_applicable"]),
   note: z.string().default(""),
 });
 
@@ -63,14 +63,19 @@ function checkerSlots(): Slot[] {
 }
 
 function toVerification(verdict: Verdict, checker: string): Verification {
-  return verdict.verdict === "agree"
-    ? { status: "agree", checker, independentAnswer: verdict.independent_answer }
-    : {
+  switch (verdict.verdict) {
+    case "agree":
+      return { status: "agree", checker, independentAnswer: verdict.independent_answer };
+    case "disagree":
+      return {
         status: "disagree",
         checker,
         independentAnswer: verdict.independent_answer,
         note: verdict.note,
       };
+    case "not_applicable":
+      return { status: "skipped", reason: "The question asks for an explanation, not a result." };
+  }
 }
 
 /**
@@ -88,6 +93,10 @@ export async function verifyAnswer(
   }
   if (finalAnswer.length > MAX_CHECKABLE_ANSWER_CHARS) {
     return { status: "skipped", reason: "Multi-part answers are not cross-checked." };
+  }
+  // Only numeric results can be re-solved and compared reliably.
+  if (!/\d/.test(finalAnswer)) {
+    return { status: "skipped", reason: "No numeric result to cross-check." };
   }
 
   for (const slot of checkerSlots().slice(0, MAX_CHECK_ATTEMPTS)) {

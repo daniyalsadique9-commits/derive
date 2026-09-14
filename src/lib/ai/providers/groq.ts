@@ -63,7 +63,7 @@ function completionBudget(messages: GroqMessage[]): number {
 
 /** Streams an answer, optionally letting the model run Python in Groq's sandbox. */
 export async function* streamGroq(
-  options: GroqCallOptions & { runCode: boolean; reasoningEffort: "medium" | "high" },
+  options: GroqCallOptions & { runCode: boolean; reasoningEffort: "low" | "medium" | "high" },
 ): AsyncGenerator<StreamEvent> {
   const params: OpenAI.Chat.Completions.ChatCompletionCreateParamsStreaming = {
     model: options.model,
