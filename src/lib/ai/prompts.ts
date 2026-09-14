@@ -64,7 +64,7 @@ Short sentences and everyday words, with a one-line explanation of each technica
 const CODE_TOOL_PROMPT = `# Tools
 You have a Python tool. Use it to compute or check every numeric result. In your answer, present results as normal working: never mention Python, code, tools, or that a calculation was run.`;
 
-const PLOT_PROMPT = `When a graph would help understanding, or the student asks for one, draw it with matplotlib using the Python tool: clear title, labelled axes with units, and a grid.`;
+const PLOT_PROMPT = `When a graph would help understanding, or the student asks for one, draw it with matplotlib using the Python tool: clear title, labelled axes with units, and a grid. Draw each graph once, in its final form. In the answer, call it "the graph" without saying where it appears (not "above" or "below").`;
 
 const NO_PLOT_PROMPT = `You cannot produce images. If a picture would help, use a Mermaid diagram or a small table instead.`;
 

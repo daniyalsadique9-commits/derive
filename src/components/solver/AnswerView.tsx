@@ -26,12 +26,13 @@ const FINAL_ANSWER_HEADING = /^##\s+Final answer/im;
 /**
  * Graphs are often drawn before the model starts writing. Rather than sitting above the
  * question, they go just before the final answer (or after the text while it streams).
+ * When the model redraws a graph before writing, only the final version is kept.
  */
 function arrangeContent(content: ContentBlock[]): ContentBlock[] {
   const firstText = content.findIndex((block) => block.kind === "text");
   if (firstText <= 0) return content;
 
-  const leadingImages = content.slice(0, firstText);
+  const leadingImages = content.slice(firstText - 1, firstText);
   const rest = content.slice(firstText);
   const target = rest.findIndex(
     (block) => block.kind === "text" && FINAL_ANSWER_HEADING.test(block.text),
