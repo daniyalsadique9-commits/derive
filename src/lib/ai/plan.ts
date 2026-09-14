@@ -2,7 +2,7 @@ import { findCourse, type SyllabusCourse } from "@/data/syllabus";
 import type { StreamEvent } from "./events";
 import { geminiAttempts, groqAttempts, streamFirstAvailable } from "./fallback";
 import type { PlanRequest, SelfRating, StudyGoal } from "./plan-schema";
-import { languageInstruction } from "./prompts";
+import { languageInstruction, languageReminder } from "./prompts";
 
 const DAY_MS = 86_400_000;
 
@@ -36,7 +36,7 @@ A checklist (- [ ] item) of the key topics for each course.
 Rules:
 - Use only units and topics from the syllabus provided, with the syllabus unit names.
 - Do not include a daily timetable or an hour-by-hour routine.
-- Use simple English: short sentences and everyday words.
+- Use short sentences and everyday words, in the answer language given below.
 - No emojis and no filler.`;
 
 const GOAL_DESCRIPTIONS: Record<StudyGoal, string> = {
@@ -135,6 +135,7 @@ function buildPlanPrompt(request: PlanRequest): string {
     "",
     "Syllabus for my selected courses:",
     ...time.allocations.map(({ course }) => describeCourse(course)),
+    languageReminder(request.language) ?? false,
   ]
     .filter((line) => line !== false)
     .join("\n");

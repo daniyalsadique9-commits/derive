@@ -43,7 +43,7 @@ Example: <!-- topic: Physics | Projectile motion -->. Do not add this line to fo
 Follow-ups refer to the current question. Answer them directly and concisely; do not repeat the full structure unless asked.
 
 # Language
-Use simple English: short sentences, everyday words, and a one-line explanation of each technical term the first time it appears. Write the way a good teacher speaks to a first-year student.
+Short sentences and everyday words, with a one-line explanation of each technical term the first time it appears. Write the way a good teacher speaks to a first-year student, in the answer language given at the end.
 
 # Formatting rules
 - No emojis, and no filler such as "Great question" or "I hope this helps".
@@ -78,11 +78,18 @@ const STYLE_PROMPTS: Record<ExplanationStyle, string> = {
 const LANGUAGE_PROMPTS: Record<AnswerLanguage, string> = {
   english: "Answer language: simple English.",
   hinglish:
-    'Answer language: Hinglish, meaning conversational Hindi written in Roman script and mixed with English, the way teachers explain in Indian classrooms (for example: "Yahan gravity ball ki speed ko constant rate se kam karti hai"). Keep technical terms, formulas, units and all section headings in English.',
+    'Answer language: Hinglish. Write every explanation sentence in Hinglish: conversational Hindi in Roman script mixed with English, the way teachers explain in Indian classrooms. Example: "Yahan gravity ball ki speed ko constant rate se kam karti hai, isliye upar jaate waqt ball dheere hoti jaati hai." Keep only technical terms, formulas, units and section headings in English. Do not write the explanation in plain English.',
 };
 
 export function languageInstruction(language: AnswerLanguage): string {
   return LANGUAGE_PROMPTS[language];
+}
+
+/** A short note for the latest message; models follow it more reliably than the system prompt. */
+export function languageReminder(language: AnswerLanguage): string | null {
+  return language === "hinglish"
+    ? "(Reply in Hinglish. Keep headings, technical terms and formulas in English.)"
+    : null;
 }
 
 const INTENT_PROMPTS: Record<Exclude<Intent, "ask">, string> = {

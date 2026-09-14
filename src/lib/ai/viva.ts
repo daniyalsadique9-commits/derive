@@ -1,7 +1,7 @@
 import { findCourse, type SyllabusCourse } from "@/data/syllabus";
 import type { StreamEvent } from "./events";
 import { geminiAttempts, groqAttempts, streamFirstAvailable } from "./fallback";
-import { languageInstruction } from "./prompts";
+import { languageInstruction, languageReminder } from "./prompts";
 import type { VivaDifficulty, VivaRequest } from "./viva-schema";
 
 const VIVA_SYSTEM_PROMPT = `You are a senior lab instructor preparing first-year B.Tech students in India for their viva voce (oral) examination. Use only the course and topics provided.
@@ -24,7 +24,7 @@ Three to five bullets on what examiners usually ask about these topics.
 Rules:
 - Exactly the requested number of questions. Do not number anything else.
 - Every question must sound like a real viva question: short, direct and spoken, for example "Why do we use monochromatic light in Newton's rings?"
-- Use simple English: short sentences and everyday words.
+- Use short sentences and everyday words, in the answer language given below.
 - Math: inline $...$ and display $$...$$ only.
 - No emojis and no filler.`;
 
@@ -45,6 +45,7 @@ function buildVivaPrompt(course: SyllabusCourse, request: VivaRequest): string {
     request.topics.length > 0 && "Topics:",
     ...request.topics.map((topic) => `- ${topic}`),
     request.customTopics.trim() && `Additional topics: ${request.customTopics.trim()}`,
+    languageReminder(request.language) ?? false,
   ]
     .filter((line) => line !== false && line !== "")
     .join("\n");

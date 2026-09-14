@@ -1,8 +1,8 @@
 import { aiConfig } from "./config";
 import type { StreamEvent } from "./events";
 import { geminiAttempts, groqAttempts, streamFirstAvailable, type Attempt } from "./fallback";
-import { buildSystemPrompt } from "./prompts";
-import type { ChatTurn, SolveRequest } from "./schema";
+import { buildSystemPrompt, languageReminder } from "./prompts";
+import type { AnswerLanguage, ChatTurn, SolveRequest } from "./schema";
 import { verifyAnswer } from "./verify";
 
 const GRAPH_REQUEST = /\b(plot|graph|sketch|draw|visuali[sz]e|curve)\b/i;
@@ -26,6 +26,15 @@ function recentTurns(messages: ChatTurn[]): ChatTurn[] {
   return recent
     .slice(firstUser)
     .map((turn, index, all) => (index === all.length - 1 ? turn : { ...turn, images: undefined }));
+}
+
+/** Adds the answer-language reminder to the latest turn, where models notice it most. */
+function withLanguageReminder(turns: ChatTurn[], language: AnswerLanguage): ChatTurn[] {
+  const reminder = languageReminder(language);
+  const latest = turns[turns.length - 1];
+  if (!reminder || !latest) return turns;
+  const content = latest.content ? `${latest.content}\n\n${reminder}` : reminder;
+  return [...turns.slice(0, -1), { ...latest, content }];
 }
 
 /**
@@ -64,7 +73,7 @@ export async function* solve(
   signal: AbortSignal,
   options: { verify: boolean },
 ): AsyncGenerator<StreamEvent> {
-  const turns = recentTurns(request.messages);
+  const turns = withLanguageReminder(recentTurns(request.messages), request.language);
   const answer = yield* streamFirstAvailable(planAttempts(turns, request), signal);
   if (answer === null) return;
 
