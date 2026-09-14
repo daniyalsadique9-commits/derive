@@ -30,6 +30,8 @@ interface GroqAttemptOptions {
   turns: ChatTurn[];
   runCode: boolean;
   reasoningEffort: "low" | "medium" | "high";
+  /** Appended when the output reaches the length limit, instead of the default note. */
+  truncatedNote?: string;
 }
 
 export function groqAttempts({
@@ -37,6 +39,7 @@ export function groqAttempts({
   turns,
   runCode,
   reasoningEffort,
+  truncatedNote,
 }: GroqAttemptOptions): Attempt[] {
   const { keys, solverModel } = aiConfig.groq;
   const messages: GroqMessage[] = [
@@ -52,6 +55,7 @@ export function groqAttempts({
         messages,
         runCode,
         reasoningEffort,
+        truncatedNote,
         signal,
         onHeaders: (headers) => quota.recordHeaders(slot, headers),
       }),

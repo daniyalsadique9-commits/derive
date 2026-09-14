@@ -28,6 +28,9 @@ Rules:
 - Math: inline $...$ and display $$...$$ only.
 - No emojis and no filler.`;
 
+const TRUNCATED_VIVA_NOTE =
+  "\n\n*This set was cut short because it reached the length limit. Ask for fewer questions and generate it again.*";
+
 const DIFFICULTY_TEXT: Record<VivaDifficulty, string> = {
   basic: "basic: definitions, aims, principles and simple use of formulae",
   mixed: "mixed: about 40% basic, 40% moderate and 20% challenging",
@@ -65,7 +68,13 @@ export async function* generateViva(
   const system = `${VIVA_SYSTEM_PROMPT}\n\n${languageInstruction(request.language)}`;
   const turns = [{ role: "user" as const, content: buildVivaPrompt(course, request) }];
   const attempts = [
-    ...groqAttempts({ system, turns, runCode: false, reasoningEffort: "low" }),
+    ...groqAttempts({
+      system,
+      turns,
+      runCode: false,
+      reasoningEffort: "low",
+      truncatedNote: TRUNCATED_VIVA_NOTE,
+    }),
     ...geminiAttempts({ system, turns }),
   ];
   const questions = yield* streamFirstAvailable(attempts, signal);

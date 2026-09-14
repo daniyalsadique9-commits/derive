@@ -27,8 +27,20 @@ function matches(course: SyllabusCourse, needle: string): boolean {
   return haystack.includes(needle);
 }
 
-function CourseCard({ course, file }: { course: SyllabusCourse; file: string }) {
+function CourseCard({
+  course,
+  file,
+  needle,
+}: {
+  course: SyllabusCourse;
+  file: string;
+  needle: string;
+}) {
   const [lecture, tutorial, practical] = course.ltp;
+  const isHit = (text: string) => needle.length > 0 && text.toLowerCase().includes(needle);
+  // A search that matches a unit or topic opens the list so the match is visible.
+  const matchesTopic = course.units.some((unit) => isHit(unit.title) || unit.topics.some(isHit));
+
   return (
     <li className="rounded-2xl border border-line bg-surface">
       <div className="flex flex-wrap items-start gap-x-4 gap-y-2 p-5">
@@ -53,7 +65,7 @@ function CourseCard({ course, file }: { course: SyllabusCourse; file: string }) 
           Open in PDF
         </a>
       </div>
-      <details className="group border-t border-line">
+      <details open={matchesTopic} className="group border-t border-line">
         <summary className="flex cursor-pointer list-none items-center gap-1.5 px-5 py-3 text-sm font-medium text-ink-muted select-none hover:text-ink">
           <ChevronRight className="size-4 transition-transform group-open:rotate-90" />
           {course.kind === "lab" ? "Experiments" : "Units and topics"}
@@ -70,7 +82,9 @@ function CourseCard({ course, file }: { course: SyllabusCourse; file: string }) 
               </p>
               <ul className="mt-1.5 list-disc space-y-1 pl-5 text-sm text-ink-muted">
                 {unit.topics.map((topic) => (
-                  <li key={topic}>{topic}</li>
+                  <li key={topic} className={cn(isHit(topic) && "font-medium text-accent")}>
+                    {topic}
+                  </li>
                 ))}
               </ul>
             </li>
@@ -167,7 +181,7 @@ export function SyllabusBrowser({ syllabus }: { syllabus: Syllabus }) {
       {courses.length > 0 ? (
         <ul className="space-y-3">
           {courses.map((course) => (
-            <CourseCard key={course.code} course={course} file={syllabus.file} />
+            <CourseCard key={course.code} course={course} file={syllabus.file} needle={needle} />
           ))}
         </ul>
       ) : (

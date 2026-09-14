@@ -15,6 +15,9 @@ const REVISION_SHARE = 0.15;
 /** Courses × weeks above which a plan goes to the model with the larger output budget first. */
 const LARGE_PLAN_CELLS = 60;
 
+const TRUNCATED_PLAN_NOTE =
+  "\n\n*This plan was cut short because it reached the length limit. Choose fewer courses or weeks and create it again.*";
+
 const PLAN_SYSTEM_PROMPT = `You are an experienced academic mentor for first-year B.Tech students in India. Create a personalised, realistic study plan using only the syllabus provided.
 
 Use these Markdown sections in this order:
@@ -152,7 +155,13 @@ export async function* generatePlan(
 ): AsyncGenerator<StreamEvent> {
   const system = `${PLAN_SYSTEM_PROMPT}\n\n${languageInstruction(request.language)}`;
   const turns = [{ role: "user" as const, content: buildPlanPrompt(request) }];
-  const groq = groqAttempts({ system, turns, runCode: false, reasoningEffort: "low" });
+  const groq = groqAttempts({
+    system,
+    turns,
+    runCode: false,
+    reasoningEffort: "low",
+    truncatedNote: TRUNCATED_PLAN_NOTE,
+  });
   const gemini = geminiAttempts({ system, turns });
   // Very large plans can exceed Groq's per-request output budget; Gemini's is much larger.
   const large = request.courses.length * request.weeks > LARGE_PLAN_CELLS;

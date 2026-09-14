@@ -63,7 +63,12 @@ function completionBudget(messages: GroqMessage[]): number {
 
 /** Streams an answer, optionally letting the model run Python in Groq's sandbox. */
 export async function* streamGroq(
-  options: GroqCallOptions & { runCode: boolean; reasoningEffort: "low" | "medium" | "high" },
+  options: GroqCallOptions & {
+    runCode: boolean;
+    reasoningEffort: "low" | "medium" | "high";
+    /** Appended when the output reaches the length limit. */
+    truncatedNote?: string;
+  },
 ): AsyncGenerator<StreamEvent> {
   const params: OpenAI.Chat.Completions.ChatCompletionCreateParamsStreaming = {
     model: options.model,
@@ -123,7 +128,9 @@ export async function* streamGroq(
     if (chunk.usage?.total_tokens) yield { type: "usage", totalTokens: chunk.usage.total_tokens };
   }
 
-  if (wroteText && finishReason === "length") yield { type: "text", text: TRUNCATED_NOTE };
+  if (wroteText && finishReason === "length") {
+    yield { type: "text", text: options.truncatedNote ?? TRUNCATED_NOTE };
+  }
 }
 
 /** One non-streaming completion; returns the reply text. */
