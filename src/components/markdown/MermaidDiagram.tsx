@@ -29,11 +29,16 @@ const MERMAID_CONFIG = {
     lineColor: "#8a867c",
     edgeLabelBackground: "#ffffff",
   },
-  flowchart: { curve: "basis", padding: 14, nodeSpacing: 36, rankSpacing: 44 },
+  flowchart: { curve: "basis", padding: 18, nodeSpacing: 40, rankSpacing: 52 },
 } as const;
 
-/** Rounds the corners of diagram boxes. */
-const ROUNDED_NODES = "[&_.node_rect]:[rx:8px] [&_.node_rect]:[ry:8px]";
+/** Rounded, softly shadowed boxes, medium-weight labels and slightly heavier connectors. */
+const ROUNDED_NODES = [
+  "[&_.node_rect]:[rx:10px] [&_.node_rect]:[ry:10px]",
+  "[&_.node_rect]:[filter:drop-shadow(0_1px_2px_rgb(0_0_0/0.08))]",
+  "[&_.nodeLabel]:font-medium",
+  "[&_.flowchart-link]:[stroke-width:1.6px]",
+].join(" ");
 
 /** Renders a Mermaid diagram written by the model; shows the source if it doesn't parse. */
 export function MermaidDiagram({ source, ready }: MermaidDiagramProps) {

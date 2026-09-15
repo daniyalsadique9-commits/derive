@@ -5,6 +5,7 @@ import ReactMarkdown, { type Components } from "react-markdown";
 import rehypeKatex from "rehype-katex";
 import remarkGfm from "remark-gfm";
 import remarkMath from "remark-math";
+import { CircuitDiagram } from "./CircuitDiagram";
 import { MermaidDiagram } from "./MermaidDiagram";
 
 interface HastNode {
@@ -14,25 +15,28 @@ interface HastNode {
   children?: HastNode[];
 }
 
-/** Returns the source of a ```mermaid block, given its <pre> element, or null. */
-function mermaidSource(pre: unknown): string | null {
+/** The language and source of a fenced code block, given its <pre> element, or null. */
+function fencedBlock(pre: unknown): { language: string; source: string } | null {
   const code = (pre as HastNode | undefined)?.children?.[0];
   const classes = code?.properties?.className;
-  if (
-    code?.tagName !== "code" ||
-    !Array.isArray(classes) ||
-    !classes.includes("language-mermaid")
-  ) {
-    return null;
-  }
-  return (code.children ?? []).map((child) => child.value ?? "").join("");
+  if (code?.tagName !== "code" || !Array.isArray(classes)) return null;
+  const language = classes
+    .find((name): name is string => typeof name === "string" && name.startsWith("language-"))
+    ?.slice("language-".length);
+  if (!language) return null;
+  return { language, source: (code.children ?? []).map((child) => child.value ?? "").join("") };
 }
 
 function buildComponents(streaming: boolean): Components {
   return {
     pre({ node, children }) {
-      const source = mermaidSource(node);
-      if (source !== null) return <MermaidDiagram source={source} ready={!streaming} />;
+      const block = fencedBlock(node);
+      if (block?.language === "mermaid") {
+        return <MermaidDiagram source={block.source} ready={!streaming} />;
+      }
+      if (block?.language === "circuit") {
+        return <CircuitDiagram source={block.source} ready={!streaming} />;
+      }
       return <pre>{children}</pre>;
     },
     table({ children }) {

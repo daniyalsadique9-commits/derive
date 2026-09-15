@@ -33,7 +33,7 @@ Two or three bullets of errors students often make on this type of problem.
 One or two bullets linking this concept to other subjects.
 
 ## Concept map
-Only when it genuinely helps: a small Mermaid diagram in a \`\`\`mermaid code block. Use \`flowchart TD\`, at most 8 nodes, and short labels in double quotes, like A["Force"] --> B["Acceleration (a = F/m)"]. Labels are plain text: no LaTeX, dollar signs, backslashes or underscores.
+Only when it genuinely helps: a small Mermaid diagram in a \`\`\`mermaid code block. Use \`flowchart TD\`, at most 8 nodes, and short labels in double quotes, like A["Force"] --> B["Acceleration (a = F/m)"]. Labels are plain text: no LaTeX, dollar signs, backslashes or underscores. Mark the central idea with :::core, formulas with :::formula and real-world examples with :::example, like B["Acceleration (a = F/m)"]:::formula.
 
 After the whole answer to a new question, add one final line exactly in this form, and nothing after it:
 <!-- topic: Subject | Topic -->
@@ -64,9 +64,14 @@ Short sentences and everyday words, with a one-line explanation of each technica
 const CODE_TOOL_PROMPT = `# Tools
 You have a Python tool. Use it to compute or check every numeric result. In your answer, present results as normal working: never mention Python, code, tools, or that a calculation was run.`;
 
-const PLOT_PROMPT = `When a graph would help understanding, or the student asks for one, draw it with matplotlib using the Python tool: clear title, labelled axes with units, and a grid. Draw each graph once, in its final form. In the answer, call it "the graph" without saying where it appears (not "above" or "below").
+const PLOT_PROMPT = `When a graph would help understanding, or the student asks for one, draw it with matplotlib using the Python tool: clear title, labelled axes with units, and a grid. Draw each graph once, in its final form. In the answer, call it "the graph" without saying where it appears (not "above" or "below").`;
 
-When the student asks for a circuit or a labelled diagram, draw it as a real figure with matplotlib rather than a flowchart: standard circuit symbols (zig-zag resistors, battery and capacitor plates, diodes as a triangle with a bar, a circle for sources), clean straight wires, and labels with values. Use the schemdraw library if it is installed, otherwise draw the symbols with matplotlib lines and patches. For a block diagram of a system, draw labelled boxes connected by arrows. Do not add a separate Mermaid concept map for these questions.`;
+const CIRCUIT_PROMPT = `# Circuit diagrams
+When a circuit diagram would help, or the student asks for one, never draw it with code or Mermaid. Describe it in a \`\`\`circuit code block containing JSON, and it is drawn automatically with standard symbols. Example:
+\`\`\`circuit
+{"title": "RC charging circuit", "source": {"type": "battery", "label": "10 V"}, "elements": [{"type": "switch", "label": "S"}, {"type": "resistor", "label": "R = 1 kΩ"}, {"type": "parallel", "branches": [[{"type": "capacitor", "label": "C = 100 µF"}], [{"type": "voltmeter"}]]}]}
+\`\`\`
+The source sits on the left and the elements follow in series around the loop, in order. Use "parallel" with two to four branches for parts connected in parallel; each branch is a list of parts in series. Part types: resistor, capacitor, inductor, diode, led, lamp, switch, fuse, ammeter, voltmeter, galvanometer, battery. Source types: battery, ac_source. Keep labels short, with values and units. This format suits series and parallel circuits; for a block diagram of a system (such as a laptop or a power supply), use a Mermaid flowchart instead.`;
 
 const NO_PLOT_PROMPT = `You cannot produce images. If a picture would help, use a Mermaid diagram or a small table instead.`;
 
@@ -118,6 +123,7 @@ export function buildSystemPrompt(
     BASE_PROMPT,
     capabilities.canRunCode ? CODE_TOOL_PROMPT : "",
     capabilities.canPlot ? PLOT_PROMPT : NO_PLOT_PROMPT,
+    CIRCUIT_PROMPT,
     STYLE_PROMPTS[style],
     LANGUAGE_PROMPTS[language],
   ]

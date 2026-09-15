@@ -12,9 +12,7 @@ export default async function VivaPage() {
 
   return (
     <div className="flex min-h-dvh flex-col">
-      <div className="print:hidden">
-        <SiteHeader />
-      </div>
+      <SiteHeader className="print:hidden" />
       <main className="mx-auto w-full max-w-6xl flex-1 px-5 py-12">
         <div className="mb-8 print:hidden">
           <h1 className="font-serif text-4xl font-semibold tracking-tight">Viva questions</h1>

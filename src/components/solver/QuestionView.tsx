@@ -12,7 +12,8 @@ export function QuestionView({ message }: { message: UserMessage }) {
   const { user } = useUser();
   const intent = message.intent === "ask" ? null : INTENT_DETAILS[message.intent];
   const IntentIcon = intent?.icon;
-  const attachments = message.images ?? [];
+  // Full files while the question is fresh; saved thumbnails and names after it is reopened.
+  const attachments = message.images ?? message.previews ?? [];
 
   return (
     <div className="flex justify-end gap-3">
@@ -26,18 +27,20 @@ export function QuestionView({ message }: { message: UserMessage }) {
         {attachments.length > 0 && (
           <div className="flex flex-wrap gap-2">
             {attachments.map((file, index) =>
-              file.mimeType === "application/pdf" ? (
+              file.mimeType === "application/pdf" || !file.data ? (
                 <span
                   key={index}
                   className="inline-flex max-w-full items-center gap-2 rounded-lg border border-line bg-surface px-3 py-2 text-sm"
                 >
                   <FileText className="size-4 shrink-0 text-accent" />
-                  <span className="truncate">{file.name ?? "Document.pdf"}</span>
+                  <span className="truncate">
+                    {file.name ?? (file.mimeType === "application/pdf" ? "Document.pdf" : "Photo")}
+                  </span>
                 </span>
               ) : (
                 <Image
                   key={index}
-                  src={toDataUrl(file)}
+                  src={toDataUrl({ mimeType: file.mimeType, data: file.data })}
                   alt={`Attached photo ${index + 1}`}
                   width={240}
                   height={240}

@@ -7,12 +7,21 @@ export type Block =
   | { kind: "code"; code: string; output?: string; ok?: boolean }
   | { kind: "image"; mimeType: string; data: string };
 
+/** What history keeps of an attachment: a small thumbnail for photos, the name for PDFs. */
+export interface AttachmentPreview {
+  mimeType: string;
+  name?: string;
+  data?: string;
+}
+
 export interface UserMessage {
   id: string;
   role: "user";
   content: string;
   intent: Intent;
+  /** Full attachments, sent with the question and kept only in memory. */
   images?: ImageInput[];
+  previews?: AttachmentPreview[];
 }
 
 export type AnswerPhase = "waiting" | "thinking" | "writing" | "verifying" | "done" | "error";

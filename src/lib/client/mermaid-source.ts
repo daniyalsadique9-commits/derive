@@ -117,9 +117,19 @@ export function quoteMermaidLabels(source: string): string {
   );
 }
 
+/** Colours for the node classes the model is asked to use in flowcharts. */
+const FLOWCHART_CLASSES = [
+  "classDef core fill:#d0161f,stroke:#b01219,color:#ffffff,font-weight:600",
+  "classDef formula fill:#f6f3ec,stroke:#d6cfbf,color:#1f1e1b",
+  "classDef example fill:#e9f5ec,stroke:#a8d5b5,color:#1f1e1b",
+].join("\n");
+
 /** Makes a model-written diagram parseable, with plain-text maths in its labels. */
 export function prepareMermaid(source: string): string {
-  return quoteMermaidLabels(source)
+  const prepared = quoteMermaidLabels(source)
     .replace(/"([^"\n]*)"/g, (_, label: string) => `"${plainMathLabel(label)}"`)
     .replace(/\|([^|\n]+)\|/g, (_, label: string) => `|${plainMathLabel(label)}|`);
+  if (!/^\s*(flowchart|graph)\b/.test(prepared)) return prepared;
+  // Mermaid rejects a space before a class, as in A["Force"] :::core.
+  return `${prepared.replace(/\s+:::(\w+)/g, ":::$1").trimEnd()}\n${FLOWCHART_CLASSES}`;
 }

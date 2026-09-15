@@ -18,6 +18,7 @@
   --warning-soft: #fdf2df;
   --code-bg: #1f1e1b;
   --code-ink: #ece9e1;
+  color-scheme: light;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -38,7 +39,15 @@
     --warning-soft: #332811;
     --code-bg: #141311;
     --code-ink: #ece9e1;
+    /* Native controls (scrollbars, pickers) follow the dark theme. */
+    color-scheme: dark;
   }
+}
+
+/* Thin scrollbars in the theme's colours instead of the browser default. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--line) transparent;
 }
 
 @theme inline {

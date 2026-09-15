@@ -19,6 +19,7 @@ import {
   type KeyboardEvent,
 } from "react";
 import type { AnswerLanguage, ExplanationStyle, ImageInput } from "@/lib/ai/schema";
+import { Select } from "@/components/ui/Select";
 import { compressImage, readPdf, toDataUrl } from "@/lib/client/image";
 import { cn } from "@/lib/utils/cn";
 
@@ -61,18 +62,14 @@ function StylePicker({
 }) {
   return (
     <>
-      <select
+      <Select
         value={value}
-        onChange={(event) => onChange(event.target.value as ExplanationStyle)}
-        aria-label="Explanation style"
-        className="h-8 rounded-lg bg-subtle px-2 text-xs font-medium text-ink outline-none sm:hidden"
-      >
-        {STYLE_OPTIONS.map((option) => (
-          <option key={option.value} value={option.value}>
-            {option.label}
-          </option>
-        ))}
-      </select>
+        options={STYLE_OPTIONS}
+        onChange={onChange}
+        label="Explanation style"
+        size="sm"
+        className="sm:hidden"
+      />
       <div
         role="radiogroup"
         aria-label="Explanation style"

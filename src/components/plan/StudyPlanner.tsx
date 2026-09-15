@@ -4,6 +4,7 @@ import { Loader2 } from "lucide-react";
 import { useState } from "react";
 import { GeneratedDocument } from "@/components/generated/GeneratedDocument";
 import { buttonStyles } from "@/components/ui/button";
+import { Select } from "@/components/ui/Select";
 import {
   Checkbox,
   FieldLabel,
@@ -29,6 +30,11 @@ const GOALS: { value: StudyGoal; label: string }[] = [
   { value: "good", label: "Score well" },
   { value: "top", label: "Top marks" },
 ];
+
+const HOUR_OPTIONS = [1, 2, 3, 4, 5, 6, 8].map((hours) => ({
+  value: hours,
+  label: `${hours} ${hours === 1 ? "hour" : "hours"}`,
+}));
 
 const RATING_OPTIONS = SELF_RATINGS.map((value) => ({
   value,
@@ -145,20 +151,15 @@ export function StudyPlanner({ userId, firstName }: StudyPlannerProps) {
               className={inputStyles}
             />
           </label>
-          <label>
+          <div>
             <FieldLabel>Hours per day</FieldLabel>
-            <select
+            <Select
               value={hoursPerDay}
-              onChange={(event) => setHoursPerDay(Number(event.target.value))}
-              className={inputStyles}
-            >
-              {[1, 2, 3, 4, 5, 6, 8].map((hours) => (
-                <option key={hours} value={hours}>
-                  {hours} {hours === 1 ? "hour" : "hours"}
-                </option>
-              ))}
-            </select>
-          </label>
+              options={HOUR_OPTIONS}
+              onChange={setHoursPerDay}
+              label="Hours per day"
+            />
+          </div>
         </div>
 
         <div>

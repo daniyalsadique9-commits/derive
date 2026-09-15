@@ -13,6 +13,7 @@ import {
   type UserMessage,
 } from "./conversation";
 import { historyStore } from "./history-store";
+import { makePreview } from "./image";
 import { streamSolve } from "./solve-client";
 
 export interface Submission {
@@ -90,11 +91,16 @@ export const solverSession = {
     { style, language, onFinish }: AskOptions,
   ): Promise<void> {
     if (controllers.has(userId)) return;
+    const controller = new AbortController();
+    controllers.set(userId, controller);
 
+    const previews = submission.images?.length
+      ? await Promise.all(submission.images.map(makePreview))
+      : undefined;
     const base =
       read(userId).conversation ??
       createConversation(submission.content, (submission.images?.length ?? 0) > 0);
-    const question: UserMessage = { id: newId(), role: "user", ...submission };
+    const question: UserMessage = { id: newId(), role: "user", ...submission, previews };
     const answer: AssistantMessage = {
       id: newId(),
       role: "assistant",
@@ -108,8 +114,6 @@ export const solverSession = {
       messages: [...base.messages, question, answer],
     };
 
-    const controller = new AbortController();
-    controllers.set(userId, controller);
     write(userId, { conversation: started, isStreaming: true });
     historyStore.save(userId, started);
 

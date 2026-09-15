@@ -1,4 +1,5 @@
 import type { ImageInput } from "@/lib/ai/schema";
+import type { AttachmentPreview } from "./conversation";
 
 const MAX_DIMENSION = 1600;
 const JPEG_QUALITY = 0.85;
@@ -30,6 +31,40 @@ export async function compressImage(file: File): Promise<ImageInput> {
 
 export function toDataUrl(image: { mimeType: string; data: string }): string {
   return `data:${image.mimeType};base64,${image.data}`;
+}
+
+const PREVIEW_DIMENSION = 360;
+const PREVIEW_QUALITY = 0.7;
+
+/**
+ * A copy of an attachment small enough for the saved history: a thumbnail for photos and just
+ * the name for PDFs. Full files are too large for browser storage.
+ */
+export async function makePreview(file: ImageInput): Promise<AttachmentPreview> {
+  if (file.mimeType === "application/pdf") return { mimeType: file.mimeType, name: file.name };
+  try {
+    const image = new Image();
+    image.src = toDataUrl(file);
+    await image.decode();
+    const scale = Math.min(
+      1,
+      PREVIEW_DIMENSION / Math.max(image.naturalWidth, image.naturalHeight),
+    );
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.round(image.naturalWidth * scale);
+    canvas.height = Math.round(image.naturalHeight * scale);
+    const context = canvas.getContext("2d");
+    if (!context) return { mimeType: file.mimeType, name: file.name };
+    context.drawImage(image, 0, 0, canvas.width, canvas.height);
+    const dataUrl = canvas.toDataURL("image/jpeg", PREVIEW_QUALITY);
+    return {
+      mimeType: "image/jpeg",
+      name: file.name,
+      data: dataUrl.slice(dataUrl.indexOf(",") + 1),
+    };
+  } catch {
+    return { mimeType: file.mimeType, name: file.name };
+  }
 }
 
 const MAX_PDF_BYTES = 4 * 1024 * 1024;

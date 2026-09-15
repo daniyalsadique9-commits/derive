@@ -5,9 +5,8 @@ import { buildSystemPrompt, languageReminder } from "./prompts";
 import type { AnswerLanguage, ChatTurn, SolveRequest } from "./schema";
 import { verifyAnswer } from "./verify";
 
-/** Questions that need a drawn figure go to the model that can run matplotlib. */
-const GRAPH_REQUEST =
-  /\b(plot|graph|sketch|draw|visuali[sz]e|curve|diagram|circuit|schematic|waveform)s?\b/i;
+/** Questions that need a plotted graph go to the model that can run matplotlib. */
+const GRAPH_REQUEST = /\b(plot|graph|sketch|visuali[sz]e|curve|waveform)s?\b/i;
 const PROOF_REQUEST = /\b(prove|derive|show that)\b/i;
 
 /**

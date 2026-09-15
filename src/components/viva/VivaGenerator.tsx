@@ -4,6 +4,7 @@ import { Loader2 } from "lucide-react";
 import { useState } from "react";
 import { GeneratedDocument } from "@/components/generated/GeneratedDocument";
 import { buttonStyles } from "@/components/ui/button";
+import { Select } from "@/components/ui/Select";
 import {
   Checkbox,
   FieldLabel,
@@ -97,20 +98,18 @@ export function VivaGenerator({ userId }: { userId: string }) {
         }}
         className="space-y-6 rounded-2xl border border-line bg-surface p-5 sm:p-6 lg:sticky lg:top-24 lg:max-h-[calc(100dvh-7rem)] lg:overflow-y-auto print:hidden"
       >
-        <label className="block">
+        <div>
           <FieldLabel>Course</FieldLabel>
-          <select
+          <Select
             value={courseCode}
-            onChange={(event) => chooseCourse(event.target.value)}
-            className={inputStyles}
-          >
-            {SYLLABUS.courses.map((option) => (
-              <option key={option.code} value={option.code}>
-                {option.title} ({option.code})
-              </option>
-            ))}
-          </select>
-        </label>
+            options={SYLLABUS.courses.map((course) => ({
+              value: course.code,
+              label: `${course.title} (${course.code})`,
+            }))}
+            onChange={chooseCourse}
+            label="Course"
+          />
+        </div>
 
         <div>
           <div className="mb-2 flex items-center gap-3">
