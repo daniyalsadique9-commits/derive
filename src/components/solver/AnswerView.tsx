@@ -30,7 +30,9 @@ const FINAL_ANSWER_HEADING = /^##\s+Final answer/im;
  */
 function arrangeContent(content: ContentBlock[]): ContentBlock[] {
   const firstText = content.findIndex((block) => block.kind === "text");
-  if (firstText <= 0) return content;
+  // Drafts drawn while the model is still thinking stay hidden until it starts writing.
+  if (firstText === -1) return [];
+  if (firstText === 0) return content;
 
   const leadingImages = content.slice(firstText - 1, firstText);
   const rest = content.slice(firstText);
@@ -57,7 +59,10 @@ function progressLabel(message: AssistantMessage): string | null {
   const calculating = message.blocks.some(
     (block) => block.kind === "code" && block.output === undefined,
   );
-  return calculating ? "Calculating…" : "Working through the solution…";
+  if (calculating) return "Calculating…";
+  return message.blocks.some((block) => block.kind === "image")
+    ? "Drawing the graph…"
+    : "Working through the solution…";
 }
 
 function ContentView({ block, streaming }: { block: ContentBlock; streaming: boolean }) {

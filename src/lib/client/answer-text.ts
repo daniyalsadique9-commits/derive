@@ -1,3 +1,5 @@
+import { isMermaidLine, startsMermaid } from "@/lib/utils/mermaid-lines";
+
 const TOPIC_COMMENT = /<!--\s*topic:\s*(.+?)\s*-->/i;
 /** Complete comments, plus a half-streamed one at the end of the text. */
 const HTML_COMMENTS = /<!--[\s\S]*?(?:-->|$)/g;
@@ -67,6 +69,32 @@ function normalizeMathDelimiters(text: string): string {
     .join("");
 }
 
+/** Wraps diagram source written outside a code block in one, so it is drawn rather than shown. */
+function fenceBareMermaid(segment: string): string {
+  const lines = segment.split("\n");
+  const out: string[] = [];
+  for (let index = 0; index < lines.length; index++) {
+    if (!startsMermaid(lines[index])) {
+      out.push(lines[index]);
+      continue;
+    }
+    let end = index + 1;
+    while (end < lines.length && isMermaidLine(lines[end])) end++;
+    let last = end;
+    while (last > index + 1 && !lines[last - 1].trim()) last--;
+    out.push("```mermaid", ...lines.slice(index, last), "```", ...lines.slice(last, end));
+    index = end - 1;
+  }
+  return out.join("\n");
+}
+
+function fenceBareDiagrams(text: string): string {
+  return text
+    .split(CODE_FENCES)
+    .map((segment, index) => (index % 2 === 1 ? segment : fenceBareMermaid(segment)))
+    .join("");
+}
+
 export function toRenderableMarkdown(text: string): string {
-  return normalizeMathDelimiters(stripComments(text));
+  return normalizeMathDelimiters(fenceBareDiagrams(stripComments(text)));
 }

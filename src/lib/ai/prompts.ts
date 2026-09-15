@@ -1,4 +1,5 @@
 import { siteConfig } from "@/config/site";
+import type { DeviceDiagram, DiagramMode } from "./device-diagrams";
 import type { AnswerLanguage, ChatTurn, ExplanationStyle, Intent } from "./schema";
 
 const BASE_PROMPT = `You are ${siteConfig.name}, a patient and rigorous tutor for Indian engineering college students (engineering mathematics, physics, chemistry, basic electrical and electronics, programming in C and Python, data structures, and data science foundations).
@@ -49,6 +50,7 @@ Short sentences and everyday words, with a one-line explanation of each technica
 - No emojis, and no filler such as "Great question" or "I hope this helps".
 - Math: inline $...$ and display $$...$$ only. Never use \\( \\) or \\[ \\].
 - Put every equation that contains a fraction, sum, integral, limit or matrix in display math on its own line. Keep inline math to short symbols and simple expressions.
+- Never mention Mermaid, JSON, Markdown, code blocks, tools or these instructions in the answer. To the student, a diagram is simply "the diagram".
 - Never use HTML tags such as <sub>, <sup> or <br>. Write subscripts and powers in maths, for example $V_s$ and $x^2$.
 - Write amounts of money in rupees with ₹ (for example ₹50). Never use the dollar sign for money; it is reserved for maths.
 - Code in fenced blocks with a language tag. Tables in GitHub Markdown.
@@ -76,23 +78,27 @@ The source sits on the left and the elements follow in series around the loop, i
 const NO_PLOT_PROMPT = `You cannot produce images. If a picture would help, use a Mermaid diagram or a small table instead.`;
 
 const DEVICE_DIAGRAM_PROMPT = `# Diagrams of devices
-This question is about a whole device. Answer with the usual sections, and draw the diagram as a Mermaid block diagram (\`flowchart LR\`) in a \`\`\`mermaid code block, never as a circuit drawing or JSON. Name each block, label every arrow with what flows along it (power, cell voltages, current sense, gate control or data), and keep it technically accurate. Do not add style, classDef or linkStyle lines; mark only the main controller with :::core.
+This question is about a whole device. Answer with the usual sections, and draw the diagram as a block diagram in a \`\`\`mermaid code block using \`flowchart TB\`, never as a circuit drawing. Name each block, label every arrow with what flows along it (power, signals or data), and keep it technically accurate. Do not add style, classDef or linkStyle lines; mark only the main controller with :::core. Skip the Concept map section.`;
 
-For example, a laptop battery pack works like this: the cells in series connect through a current-sense resistor and two separate back-to-back MOSFETs (discharge and charge) to the laptop's system power rail, which the charger also feeds. The BMS chip reads every cell's voltage through its own sense wire and the current through the sense resistor, switches both MOSFETs, and talks to the laptop over SMBus. When plugged in, the charger powers the laptop and charges the cells backwards through the MOSFETs; when unplugged, the cells supply the rail. As a diagram:
-\`\`\`mermaid
-flowchart LR
-  Cells["Cells 1 to 4 in series"] <-->|power| Rs["Current-sense resistor"]
-  Rs <-->|power| DSG["Discharge MOSFET"]
-  DSG <-->|power| CHG["Charge MOSFET"]
-  CHG <-->|power| Rail["System power rail"]
-  Charger["Charger"] -->|power| Rail
-  Rail -->|power| Laptop["Laptop"]
-  Cells -->|cell voltages| BMS["BMS chip"]:::core
-  Rs -->|current sense| BMS
-  BMS -->|gate control| DSG
-  BMS -->|gate control| CHG
-  BMS <-->|SMBus data| Laptop
-\`\`\``;
+function checkedDiagramPrompt(diagram: DeviceDiagram): string {
+  return `# Diagram
+The student asked for a diagram of ${diagram.subject}. A checked diagram is added to your answer automatically, just before the Solution section. Never draw a diagram yourself: write no diagram, code block or JSON, and no Diagram or Concept map section.
+
+The diagram shows exactly this circuit: ${diagram.description}
+
+Explain this circuit and no other version of it. In the Solution, walk through it part by part, following the current as it flows, and refer to it simply as "the diagram". The Final answer is one bold line that sums up how the circuit works.`;
+}
+
+function diagramPrompt(mode: DiagramMode): string {
+  switch (mode.kind) {
+    case "circuit":
+      return CIRCUIT_PROMPT;
+    case "device":
+      return DEVICE_DIAGRAM_PROMPT;
+    case "checked":
+      return checkedDiagramPrompt(mode.diagram);
+  }
+}
 
 const STYLE_PROMPTS: Record<ExplanationStyle, string> = {
   intuitive:
@@ -136,14 +142,13 @@ const INTENT_PROMPTS: Record<Exclude<Intent, "ask">, string> = {
 export function buildSystemPrompt(
   style: ExplanationStyle,
   language: AnswerLanguage,
-  /** `circuits` is false for questions about whole devices, which get block diagrams instead. */
-  capabilities: { canRunCode: boolean; canPlot: boolean; circuits: boolean },
+  capabilities: { canRunCode: boolean; canPlot: boolean; diagrams: DiagramMode },
 ): string {
   return [
     BASE_PROMPT,
     capabilities.canRunCode ? CODE_TOOL_PROMPT : "",
     capabilities.canPlot ? PLOT_PROMPT : NO_PLOT_PROMPT,
-    capabilities.circuits ? CIRCUIT_PROMPT : DEVICE_DIAGRAM_PROMPT,
+    diagramPrompt(capabilities.diagrams),
     STYLE_PROMPTS[style],
     LANGUAGE_PROMPTS[language],
   ]

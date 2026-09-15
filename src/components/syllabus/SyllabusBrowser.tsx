@@ -146,7 +146,8 @@ function CourseCard({
                 {theory ? "Theory" : "Lab"}
               </span>
             </div>
-            <h3 className="mt-1 font-serif text-lg leading-snug font-semibold text-ink">
+            {/* Two lines are kept for every title, so closed cards side by side line up. */}
+            <h3 className="mt-1 font-serif text-lg leading-snug font-semibold text-ink lg:min-h-[2lh]">
               {course.title}
             </h3>
           </div>
@@ -170,7 +171,7 @@ function CourseCard({
           {theory && hours > 0 && <span>{hours} teaching hours</span>}
         </div>
 
-        {theory && hours > 0 && (
+        {theory && hours > 0 ? (
           <div
             className="mt-3 flex h-2 gap-0.5 overflow-hidden rounded-full"
             aria-label="Hours per unit"
@@ -184,6 +185,8 @@ function CourseCard({
               />
             ))}
           </div>
+        ) : (
+          <div aria-hidden className="mt-3 hidden h-2 lg:block" />
         )}
       </div>
 
@@ -355,7 +358,8 @@ export function SyllabusBrowser({ syllabus }: { syllabus: Syllabus }) {
       </div>
 
       {courses.length > 0 ? (
-        <ul className="grid gap-4 lg:grid-cols-2">
+        // Each card keeps its own height, so opening one never stretches its neighbour.
+        <ul className="grid items-start gap-4 lg:grid-cols-2">
           {courses.map((course) => (
             <CourseCard key={course.code} course={course} file={syllabus.file} needle={needle} />
           ))}

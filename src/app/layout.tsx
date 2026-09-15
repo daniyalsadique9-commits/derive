@@ -38,10 +38,20 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body className="min-h-full">
         <ClerkProvider
           appearance={{
+            // Every colour is fixed, so Clerk's light cards stay readable when the device is
+            // in dark mode instead of mixing in dark-mode defaults.
             variables: {
               colorPrimary: "#d0161f",
+              colorPrimaryForeground: "#ffffff",
               colorForeground: "#1f1e1b",
+              colorMutedForeground: "#6b675e",
+              colorMuted: "#f3f1ea",
               colorBackground: "#ffffff",
+              colorInput: "#ffffff",
+              colorInputForeground: "#1f1e1b",
+              colorNeutral: "#1f1e1b",
+              colorBorder: "#e5e0d4",
+              colorRing: "#d0161f",
               fontFamily: "var(--font-inter)",
               borderRadius: "0.75rem",
             },

@@ -34,13 +34,14 @@ export function SiteNav({ className }: { className?: string }) {
             href={href}
             aria-current={active ? "page" : undefined}
             className={cn(
-              "inline-flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
+              "inline-flex shrink-0 items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm font-medium transition-colors sm:px-3",
               active
                 ? "bg-accent-soft text-accent"
                 : "text-ink-muted hover:bg-subtle hover:text-ink",
             )}
           >
-            <Icon className="size-4" />
+            {/* On phones the labels alone fit all four sections on one row. */}
+            <Icon className="size-4 max-sm:hidden" />
             {label}
             {href === "/solve" && answering && (
               <span className="size-1.5 animate-pulse rounded-full bg-accent">

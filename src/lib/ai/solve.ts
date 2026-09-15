@@ -1,4 +1,5 @@
 import { aiConfig } from "./config";
+import { diagramModeFor, withCheckedDiagram, type DiagramMode } from "./device-diagrams";
 import type { StreamEvent } from "./events";
 import { geminiAttempts, groqAttempts, streamFirstAvailable, type Attempt } from "./fallback";
 import { buildSystemPrompt, languageReminder } from "./prompts";
@@ -18,13 +19,6 @@ const LONG_CONTEXT_CHARS = 12_000;
 /** Reading a photo or PDF takes longer before the first word than a typed question. */
 const ATTACHMENT_FIRST_TOKEN_MS = 45_000;
 
-/** Real devices with chips and connectors can't be drawn accurately as a one-loop circuit. */
-const SYSTEM_DEVICE =
-  /\b(laptops?|battery pack|bms|power supply|smps|charger|inverter|ups|motherboard|mobile phone|smartphone)\b/i;
-const DIAGRAM_REQUEST = /\b(circuit|diagram|schematic)s?\b/i;
-const BLOCK_DIAGRAM_REMINDER =
-  "(Answer as usual, and draw the diagram as an accurate Mermaid block diagram, not as a circuit block.)";
-
 /** Long, multi-part questions and proofs: they need a larger output budget and aren't cross-checked. */
 function isLongDerivation(content: string): boolean {
   return content.length > 500 || PROOF_REQUEST.test(content);
@@ -37,26 +31,6 @@ function recentTurns(messages: ChatTurn[]): ChatTurn[] {
   return recent
     .slice(firstUser)
     .map((turn, index, all) => (index === all.length - 1 ? turn : { ...turn, images: undefined }));
-}
-
-/** A diagram request about a whole device, including a follow-up such as "can I get a diagram". */
-function isDeviceDiagramRequest(turns: ChatTurn[]): boolean {
-  const latest = turns[turns.length - 1];
-  const asked = turns
-    .filter((turn) => turn.role === "user")
-    .map((turn) => turn.content)
-    .join(" ");
-  return latest !== undefined && DIAGRAM_REQUEST.test(latest.content) && SYSTEM_DEVICE.test(asked);
-}
-
-/** Repeats the block-diagram instruction on the question itself, where models notice it most. */
-function withDiagramReminder(turns: ChatTurn[]): ChatTurn[] {
-  if (!isDeviceDiagramRequest(turns)) return turns;
-  const latest = turns[turns.length - 1];
-  return [
-    ...turns.slice(0, -1),
-    { ...latest, content: `${latest.content}\n\n${BLOCK_DIAGRAM_REMINDER}` },
-  ];
 }
 
 /** Adds the answer-language reminder to the latest turn, where models notice it most. */
@@ -73,16 +47,14 @@ function withLanguageReminder(turns: ChatTurn[], language: AnswerLanguage): Chat
  * most text questions. Gemini handles photos and PDFs, graphs (matplotlib) and long proofs,
  * where its larger output budget matters, and is the backup for everything else.
  */
-function planAttempts(turns: ChatTurn[], request: SolveRequest): Attempt[] {
+function planAttempts(turns: ChatTurn[], request: SolveRequest, diagrams: DiagramMode): Attempt[] {
   const latest = turns[turns.length - 1];
-  // Whole devices are shown as block diagrams: offering the circuit format pushes the model
-  // into an inaccurate one-loop drawing.
-  const circuits = !isDeviceDiagramRequest(turns);
   const gemini = geminiAttempts({
     system: buildSystemPrompt(request.style, request.language, {
       canRunCode: true,
-      canPlot: true,
-      circuits,
+      // A checked diagram replaces any drawing, so the model isn't offered plots for it.
+      canPlot: diagrams.kind !== "checked",
+      diagrams,
     }),
     turns,
   });
@@ -92,7 +64,7 @@ function planAttempts(turns: ChatTurn[], request: SolveRequest): Attempt[] {
     system: buildSystemPrompt(request.style, request.language, {
       canRunCode: true,
       canPlot: false,
-      circuits,
+      diagrams,
     }),
     turns,
     runCode: true,
@@ -113,20 +85,28 @@ export async function* solve(
   signal: AbortSignal,
   options: { verify: boolean },
 ): AsyncGenerator<StreamEvent> {
-  const turns = withDiagramReminder(
-    withLanguageReminder(recentTurns(request.messages), request.language),
-  );
+  const turns = withLanguageReminder(recentTurns(request.messages), request.language);
   const latest = turns[turns.length - 1];
   const hasAttachments = (latest?.images?.length ?? 0) > 0;
-  const answer = yield* streamFirstAvailable(
-    planAttempts(turns, request),
+  // Whole devices can't be drawn accurately as a one-loop circuit, and models draw them
+  // unreliably, so well-known devices get a checked diagram added by the app.
+  const diagrams = diagramModeFor(turns);
+  const stream = streamFirstAvailable(
+    planAttempts(turns, request, diagrams),
     signal,
     hasAttachments ? { firstTokenTimeoutMs: ATTACHMENT_FIRST_TOKEN_MS } : {},
   );
+  const answer = yield* diagrams.kind === "checked"
+    ? withCheckedDiagram(stream, diagrams.diagram)
+    : stream;
   if (answer === null) return;
 
   // A short check can't reliably re-solve a long proof, and a false alarm is worse than none.
-  const checkable = (latest?.intent ?? "ask") === "ask" && !isLongDerivation(latest?.content ?? "");
+  // A device diagram has no single result to check.
+  const checkable =
+    (latest?.intent ?? "ask") === "ask" &&
+    !isLongDerivation(latest?.content ?? "") &&
+    diagrams.kind === "circuit";
   if (options.verify && checkable) {
     yield { type: "verifying" };
     yield { type: "verification", result: await verifyAnswer(answer, signal) };

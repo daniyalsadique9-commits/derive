@@ -26,8 +26,14 @@ export function Select<T extends string | number>({
   const [open, setOpen] = useState(false);
   const [highlight, setHighlight] = useState(0);
   const root = useRef<HTMLDivElement>(null);
+  const list = useRef<HTMLUListElement>(null);
   const listId = useId();
   const selected = options.find((option) => option.value === value) ?? options[0];
+
+  // The selected or highlighted option is always scrolled into view in a long list.
+  useEffect(() => {
+    if (open) list.current?.children[highlight]?.scrollIntoView({ block: "nearest" });
+  }, [open, highlight]);
 
   useEffect(() => {
     if (!open) return;
@@ -102,10 +108,11 @@ export function Select<T extends string | number>({
       </button>
       {open && (
         <ul
+          ref={list}
           id={listId}
           role="listbox"
           aria-label={label}
-          className="absolute left-0 z-40 mt-1.5 max-h-72 w-full overflow-y-auto rounded-xl border border-line bg-surface p-1 shadow-lg"
+          className="absolute left-0 z-40 mt-1.5 max-h-72 w-full overflow-y-auto rounded-xl border border-line bg-surface p-1 shadow-[0_16px_40px_-12px_rgb(0_0_0/0.3)] dark:border-[#4a4843] dark:shadow-[0_16px_40px_-8px_rgb(0_0_0/0.75)]"
         >
           {options.map((option, index) => (
             <li

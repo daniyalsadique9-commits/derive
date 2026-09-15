@@ -44,6 +44,18 @@
   }
 }
 
+/*
+ * Clerk's sign-in and account cards stay light in dark mode, so they keep light-scheme colours
+ * and dark text rather than inheriting the page's light text.
+ */
+:where([class^="cl-"], [class*=" cl-"]) {
+  color-scheme: light;
+}
+
+:where(.cl-rootBox, .cl-userButtonPopoverCard, .cl-modalBackdrop, .cl-cardBox) {
+  color: #1f1e1b;
+}
+
 /* Thin scrollbars in the theme's colours instead of the browser default. */
 * {
   scrollbar-width: thin;

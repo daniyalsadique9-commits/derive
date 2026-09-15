@@ -75,7 +75,7 @@ export function MermaidDiagram({ source, ready }: MermaidDiagramProps) {
       <div className="not-prose group relative my-5">
         <figure
           onClick={() => setZoomed(true)}
-          className={`flex cursor-zoom-in justify-center overflow-x-auto rounded-xl border border-line bg-white p-4 ${ROUNDED_NODES}`}
+          className={`cursor-zoom-in overflow-x-auto rounded-xl border border-line bg-white p-4 [&_svg]:mx-auto [&_svg]:block [&_svg]:h-auto ${ROUNDED_NODES}`}
           dangerouslySetInnerHTML={{ __html: state.svg }}
         />
         <button
@@ -107,7 +107,7 @@ export function MermaidDiagram({ source, ready }: MermaidDiagramProps) {
 
   return (
     <div className="not-prose my-5 grid h-40 place-items-center rounded-xl border border-dashed border-line text-sm text-ink-muted">
-      Drawing concept map…
+      Drawing diagram…
     </div>
   );
 }
