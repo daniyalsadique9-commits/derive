@@ -11,7 +11,7 @@ const jetbrainsMono = JetBrains_Mono({ variable: "--font-jetbrains-mono", subset
 
 export const metadata: Metadata = {
   title: {
-    default: `${siteConfig.name} — ${siteConfig.tagline}`,
+    default: `${siteConfig.name} · ${siteConfig.tagline}`,
     template: `%s · ${siteConfig.name}`,
   },
   description: siteConfig.description,
@@ -50,7 +50,6 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
               colorInput: "#ffffff",
               colorInputForeground: "#1f1e1b",
               colorNeutral: "#1f1e1b",
-              colorBorder: "#e5e0d4",
               colorRing: "#d0161f",
               fontFamily: "var(--font-inter)",
               borderRadius: "0.75rem",
