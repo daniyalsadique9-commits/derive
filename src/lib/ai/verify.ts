@@ -23,7 +23,7 @@ const verdictSchema = z.object({
 type Verdict = z.infer<typeof verdictSchema>;
 
 /** Returns the body of a `## Heading` section, or null if the answer has no such section. */
-export function extractSection(markdown: string, heading: string): string | null {
+function extractSection(markdown: string, heading: string): string | null {
   const lines = markdown.split("\n");
   const start = lines.findIndex((line) =>
     new RegExp(`^##\\s+${heading}\\s*$`, "i").test(line.trim()),

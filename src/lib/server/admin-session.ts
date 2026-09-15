@@ -41,7 +41,7 @@ export async function hasAdminSession(userId: string): Promise<boolean> {
   return safeEqual(signature, sign(userId, expiresAt, expected.password));
 }
 
-export type AdminSignInResult = "ok" | "wrong" | "locked";
+type AdminSignInResult = "ok" | "wrong" | "locked";
 
 /** Checks the admin username and password and starts a 12-hour admin session. */
 export async function startAdminSession(

@@ -160,7 +160,7 @@ function mightBeSpecial(partial: string): boolean {
  * writes, and adds the checked diagram just before the Solution section. Plain lines stream
  * through at once; only lines that might start a block or heading wait to be seen whole.
  */
-export class CheckedDiagramWriter {
+class CheckedDiagramWriter {
   private pending = "";
   private passing = false;
   private skipping: "fence" | "mermaid" | "section" | null = null;

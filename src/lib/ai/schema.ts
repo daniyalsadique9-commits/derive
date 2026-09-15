@@ -11,12 +11,7 @@ export const INTENTS = ["ask", "deeper", "simpler", "practice", "methods", "expl
 export type Intent = (typeof INTENTS)[number];
 
 /** Photos, or PDF documents such as question papers. */
-export const ATTACHMENT_MIME_TYPES = [
-  "image/jpeg",
-  "image/png",
-  "image/webp",
-  "application/pdf",
-] as const;
+const ATTACHMENT_MIME_TYPES = ["image/jpeg", "image/png", "image/webp", "application/pdf"] as const;
 
 const imageSchema = z.object({
   mimeType: z.enum(ATTACHMENT_MIME_TYPES),

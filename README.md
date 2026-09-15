@@ -19,7 +19,7 @@ An AI tutor for engineering students that explains the concept behind every answ
 ![Clerk](https://img.shields.io/badge/Clerk-6C47FF?style=flat-square&logo=clerk&logoColor=white)
 ![Cloudflare](https://img.shields.io/badge/Cloudflare_Tunnel-F38020?style=flat-square&logo=cloudflare&logoColor=white)
 
-**[Live site](https://deriveai.online)** · **[Features](#features)** · **[How it works](#how-it-works)** · **[Code tour](#a-tour-of-the-code)** · **[Run it locally](#run-it-locally)**
+**[Live site](https://deriveai.online)** · **[Features](#features)** · **[How it works](#how-it-works)** · **[Code overview](#code-overview)** · **[Getting started](#getting-started)**
 
 <br />
 
@@ -31,9 +31,9 @@ An AI tutor for engineering students that explains the concept behind every answ
 
 <br />
 
-## Why Derive
+## About
 
-Most AI answers give a result and move on. First-year engineering students need the reason behind it: where a formula comes from, why each step follows, and how to check the answer by hand. Derive answers every question in the same teaching structure, computes numbers with code instead of guessing them, and has a second model re-solve the question before the answer is marked **Verified**.
+Derive is for first-year engineering students who need more than a final result: where a formula comes from, why each step follows, and how to check the answer by hand. Every question is answered in the same teaching structure, numbers are computed with code, and a second model solves the question again before the answer is marked **Verified**.
 
 ## Features
 
@@ -41,45 +41,45 @@ Most AI answers give a result and move on. First-year engineering students need 
 <tr>
 <td width="50%" valign="top">
 
-### Answers that teach
+### Answers
 
-- **Concept first.** Question, Prerequisites, Core concept, Solution, Final answer, Verification, Common mistakes and Related concepts, every time.
-- **Verified.** Numbers are computed in a Python sandbox, and a model from a different family solves the question again. A result is flagged only when a second checker also disagrees.
-- **Three styles.** Intuitive, Formal or Real-world analogy.
-- **Simple English or Hinglish.** Technical terms, formulas and headings stay in English.
-- **Follow-ups in one click.** Go deeper, Simplify, Practice (similar, harder and trick), Other methods, and Explain back with feedback.
+- Every answer follows the same structure: question, prerequisites, core concept, solution, final answer, verification, common mistakes and related concepts.
+- Numbers are computed in a Python sandbox, and a model from a different family solves the question again. An answer is flagged only if a second checker also disagrees.
+- Three explanation styles: intuitive, formal or real-world analogy.
+- Simple English or Hinglish, with technical terms, formulas and headings kept in English.
+- One-click follow-ups: go deeper, simplify, practice questions (similar, harder and trick), other methods, and explain back with feedback.
 
 </td>
 <td width="50%" valign="top">
 
-### Diagrams drawn by code
+### Diagrams and graphs
 
-- **Graphs** are plotted with matplotlib, never drawn by the model, and only the final graph is shown.
-- **Circuits** are drawn with standard symbols by the app's own SVG renderer, from a list of parts.
-- **Device diagrams** for a laptop battery pack, a laptop, a charger or SMPS, a UPS or inverter, and a regulated power supply are checked drawings built into the app; the model writes only the explanation.
-- **Concept maps** in the app's colours, and every figure opens full screen.
+- Graphs are plotted with matplotlib rather than drawn by the model, and only the final graph is shown.
+- Circuits are drawn with standard symbols by the app's own SVG renderer, from a list of parts.
+- A laptop battery pack, a laptop, a charger or SMPS, a UPS or inverter and a regulated power supply have checked diagrams built into the app. For these, the model writes only the explanation.
+- Concept maps use the app's colours, and every figure can be opened full screen.
 
 </td>
 </tr>
 <tr>
 <td width="50%" valign="top">
 
-### Built around the syllabus
+### Syllabus tools
 
-- **Syllabus browser.** All ten Semester 1 (Group A) courses with codes, credits, units, topics and hours, linked to the right page of the official PDF.
-- **Study plans.** A week-by-week plan from the syllabus only, based on your confidence in each course, the time you have and your goal. Every task names its course and unit.
-- **Viva practice.** Likely viva questions for any course or lab, with a formula sheet and model answers.
+- A syllabus browser with all ten Semester 1 (Group A) courses: codes, credits, units, topics and hours, linked to the right page of the official PDF.
+- Week-by-week study plans built only from the syllabus, based on confidence in each course, available time and goal. Every task names its course and unit.
+- Viva practice for any course or lab, with a formula sheet and model answers.
 
 </td>
 <td width="50%" valign="top">
 
-### Made for real use
+### Other features
 
-- **Photos and PDFs.** Handwritten problems, textbook figures, circuit diagrams and question papers.
-- **Keeps working in the background.** Move to another page and the answer keeps arriving.
-- **History** with search and bookmarks, stored in your own browser.
-- **Light and dark themes**, on desktop and phone.
-- **Admin panel** with maintenance mode, feature switches, limits and live capacity, behind a separate username and password.
+- Questions from photos and PDFs: handwritten problems, textbook figures, circuit diagrams and question papers.
+- Answers keep streaming while you move to another page.
+- Searchable history with bookmarks, stored in the browser.
+- Light and dark themes on desktop and phone.
+- An admin panel with maintenance mode, feature switches, limits and live capacity, behind a separate username and password.
 
 </td>
 </tr>
@@ -117,10 +117,10 @@ flowchart LR
   C -->|Verified or Needs review| S
 ```
 
-1. **Reasoning.** A reasoning model works through the problem before writing, under strict rules: one final answer, stated assumptions, and no agreeing with a wrong claim.
-2. **Exact computation.** Numbers come from code, not from predicting digits.
-3. **Independent check.** A model from another family solves the question from scratch. Only numeric results are checked, and a disagreement must be confirmed by a second checker.
-4. **Fallback.** If a model is busy, slow to start or out of quota, the next one takes over across keys and providers, and answers stream as they are written.
+1. A reasoning model works through the problem before writing, under strict rules: one final answer, stated assumptions, and no agreeing with a wrong claim.
+2. Numbers come from code, not from predicting digits.
+3. A model from another family solves the question from scratch. Only numeric results are checked, and a disagreement must be confirmed by a second checker.
+4. If a model is busy, slow to start or out of quota, the next one takes over across keys and providers. Answers stream as they are written.
 
 ### Drawing diagrams
 
@@ -135,7 +135,7 @@ flowchart LR
 
 Language models draw diagrams unreliably, so Derive never shows diagram source: whatever the model writes is either drawn by code or removed before it reaches the student.
 
-## A tour of the code
+## Code overview
 
 | Where                                                                                      | What it does                                                            |
 | ------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------- |
@@ -199,7 +199,7 @@ scripts/smoke.mts         End-to-end pipeline check
 | Validation     | Zod                                                                       |
 | Hosting        | Ubuntu server, systemd, Cloudflare Tunnel                                 |
 
-## Run it locally
+## Getting started
 
 **You need** Node.js 20 or newer, and API keys from [Google AI Studio](https://aistudio.google.com/apikey) and [Groq](https://console.groq.com/keys).
 

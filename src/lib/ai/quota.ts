@@ -41,7 +41,7 @@ const DAY_MS = 86_400_000;
  * requests are counted here against the configured limits. State is in-memory: exact on a
  * single server (a laptop demo), best-effort on multi-instance hosting.
  */
-export class QuotaTracker {
+class QuotaTracker {
   private readonly states = new Map<string, SlotState>();
 
   constructor(private readonly selfCounted: Partial<Record<ProviderId, SelfCountedLimits>>) {}
@@ -146,7 +146,7 @@ function readWindow(
 }
 
 /** Parses Groq durations such as "1m26.4s", "5.46s", "2h3m" or "120ms" into milliseconds. */
-export function parseDuration(value: string): number {
+function parseDuration(value: string): number {
   const unitMs: Record<string, number> = { h: 3_600_000, m: MINUTE_MS, s: 1000, ms: 1 };
   let total = 0;
   for (const [, amount, unit] of value.matchAll(/(\d+(?:\.\d+)?)(ms|h|m|s)/g)) {

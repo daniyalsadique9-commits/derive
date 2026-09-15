@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const PART_TYPES = [
+const PART_TYPES = [
   "resistor",
   "capacitor",
   "inductor",
@@ -19,7 +19,7 @@ export const PART_TYPES = [
 
 type PartType = (typeof PART_TYPES)[number];
 
-export const SOURCE_TYPES = ["battery", "ac_source"] as const;
+const SOURCE_TYPES = ["battery", "ac_source"] as const;
 
 const MAX_ELEMENTS = 12;
 const MAX_LABEL_CHARS = 40;

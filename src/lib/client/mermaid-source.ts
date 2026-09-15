@@ -90,7 +90,7 @@ function script(text: string, characters: Record<string, string>): string {
 }
 
 /** Mermaid can't render LaTeX, so `V_s`, `K_{max}` and `\lambda` become Vₛ, Kₘₐₓ and λ. */
-export function plainMathLabel(label: string): string {
+function plainMathLabel(label: string): string {
   return label
     .replace(/\$/g, "")
     .replace(KNOWN_COMMAND, (_, name: string) => MATH_WORDS[name])
@@ -110,7 +110,7 @@ export function plainMathLabel(label: string): string {
  * Models often put parentheses, "=" or "+" in labels, which Mermaid can't parse unquoted.
  * Other node shapes (`[[..]]`, `[(..)]`, `[/../]`) and already-quoted labels are left alone.
  */
-export function quoteMermaidLabels(source: string): string {
+function quoteMermaidLabels(source: string): string {
   return source.replace(
     /\b([A-Za-z0-9_]+)\[(?!["[(/\\])([^\]\n]*)\]/g,
     (_, id: string, label: string) => `${id}["${label.replace(/"/g, "#quot;")}"]`,

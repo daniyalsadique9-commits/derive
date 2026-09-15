@@ -2,7 +2,7 @@ import { currentUserIsAdmin } from "./admin-auth";
 import { adminStore } from "./admin-store";
 import { userRateLimiter } from "./rate-limit";
 
-export type AccessDecision = { ok: true } | { ok: false; status: number; error: string };
+type AccessDecision = { ok: true } | { ok: false; status: number; error: string };
 
 interface AccessRequest {
   userId: string;

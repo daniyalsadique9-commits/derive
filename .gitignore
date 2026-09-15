@@ -40,10 +40,6 @@ yarn-error.log*
 # admin settings saved by the running server
 /.data
 
-# editor and tooling instruction files
-AGENTS.md
-CLAUDE.md
-
 # vercel
 .vercel
 

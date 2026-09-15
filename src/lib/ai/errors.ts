@@ -9,7 +9,7 @@ export class ResponseTimeoutError extends Error {
 }
 
 /** HTTP status of a provider error, if there is one. */
-export function statusOf(error: unknown): number | undefined {
+function statusOf(error: unknown): number | undefined {
   if (error instanceof OpenAI.APIError) return error.status;
   if (error instanceof GeminiApiError) return error.status;
   return undefined;

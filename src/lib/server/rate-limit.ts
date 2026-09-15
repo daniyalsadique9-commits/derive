@@ -3,7 +3,7 @@ import { singleton } from "./singleton";
 const WINDOW_MS = 60_000;
 
 /** Sliding one-minute window per user; the limit comes from the admin settings. */
-export class UserRateLimiter {
+class UserRateLimiter {
   private readonly hits = new Map<string, number[]>();
 
   tryAcquire(userId: string, limitPerMinute: number, now = Date.now()): boolean {
