@@ -10,11 +10,16 @@ export default function SyllabusPage() {
   return (
     <div className="flex min-h-dvh flex-col">
       <SiteHeader />
-      <main className="mx-auto w-full max-w-4xl flex-1 px-5 py-14">
-        <h1 className="font-serif text-4xl font-semibold tracking-tight">Syllabus</h1>
-        <p className="mt-3 mb-8 max-w-2xl leading-relaxed text-ink-muted">
-          {SYLLABUS.program} Semester {SYLLABUS.semester}, {SYLLABUS.group} (Batch {SYLLABUS.batch}
-          ).
+      <main className="mx-auto w-full max-w-6xl flex-1 px-5 py-14">
+        <p className="text-sm font-semibold tracking-wide text-accent uppercase">
+          Semester {SYLLABUS.semester} · {SYLLABUS.group} · Batch {SYLLABUS.batch}
+        </p>
+        <h1 className="mt-2 font-serif text-4xl font-semibold tracking-tight sm:text-5xl">
+          Syllabus
+        </h1>
+        <p className="mt-3 mb-10 max-w-2xl leading-relaxed text-ink-muted">
+          Every course in the official {SYLLABUS.program} Semester {SYLLABUS.semester} syllabus,
+          with its units, topics and reference books. Search any topic to find where it is taught.
         </p>
         <SyllabusBrowser syllabus={SYLLABUS} />
       </main>

@@ -12,6 +12,22 @@ const RATING_WEIGHT: Record<SelfRating, number> = { weak: 1.5, average: 1, stron
 /** Share of the total time kept for final revision and previous-year papers. */
 const REVISION_SHARE = 0.15;
 
+/** Short names that tag every task, so work is never attributed to the wrong course. */
+const SHORT_NAMES: Record<string, string> = {
+  "100102": "Maths",
+  "100104": "Physics",
+  "100105": "AI",
+  "100108": "CFET",
+  "100109": "UHV",
+  "100110": "Constitution",
+  "100111": "BEEE",
+  "100104P": "Physics Lab",
+  "100111P": "BEEE Lab",
+  "100112P": "PPS Lab",
+};
+
+const shortName = (course: SyllabusCourse): string => SHORT_NAMES[course.code] ?? course.title;
+
 /** Courses × weeks above which a plan goes to the model with the larger output budget first. */
 const LARGE_PLAN_CELLS = 60;
 
@@ -26,9 +42,10 @@ Use these Markdown sections in this order:
 Copy the time allocation table provided, unchanged. Below it, write one sentence explaining the split: time follows each course's syllabus hours, weaker courses get more, and part of the time is kept for final revision.
 
 ## Week-by-week plan
-One table with exactly one row per week and columns: Week | Focus | Tasks | Checkpoint. Use the week labels provided and cover every unit of every selected course across the weeks. Focus names that week's courses and units with hours, for example "Maths U1 (4 h), Physics U2 (3 h)". Each course's total hours across the weeks should match the allocation. Schedule weaker courses and difficult topics earlier. Keep the final week (or the last 15% of the time) for revision and previous-year papers.
-- Tasks: two or three concrete, measurable tasks, for example "Solve 15 rank and consistency problems (Grewal)". Never vague tasks such as "study unit 1" or "revise".
-- Checkpoint: one short question the student should be able to answer at the end of that week.
+One table with exactly one row per week and columns: Week | Focus | Tasks | Checkpoint. Use the week labels provided and cover every unit of every selected course across the weeks. Focus names that week's courses by their short names, with units and hours, for example "Maths U1 (4 h), BEEE U2 (3 h)". Each course's total hours across the weeks should match the allocation. Schedule weaker courses and difficult topics earlier. Keep the final week (or the last 15% of the time) for revision and previous-year papers.
+- Tasks: two or three concrete, measurable tasks, each starting with the course's short name and unit, for example "Maths U2: Solve 15 rank and consistency problems (Grewal)". Never vague tasks such as "study unit 1" or "revise".
+- Checkpoint: one short question the student should be able to answer at the end of that week, also starting with the course's short name.
+- Every task and checkpoint must use a topic from that course's own units as listed in the syllabus below. Never put a topic under a different course: for example, nodal and mesh analysis belong to BEEE, not Maths or Physics.
 
 ## Course strategies
 One subsection per course (### Course title) with at most three bullets: what to practise most, a common mistake to avoid, and the most useful reference book from the syllabus.
@@ -116,7 +133,7 @@ function weekLabels(weeks: number, start = new Date()): string[] {
 
 function describeCourse(course: SyllabusCourse): string {
   return [
-    `### ${course.code} ${course.title} (${course.credits} credits)`,
+    `### ${course.code} ${course.title}, short name "${shortName(course)}" (${course.credits} credits)`,
     ...course.units.map(
       (unit, index) =>
         `- Unit ${index + 1}: ${unit.title} (${unit.hours} h): ${unit.topics.join("; ")}`,
