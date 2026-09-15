@@ -1,5 +1,6 @@
 import { useSyncExternalStore } from "react";
-import type { Conversation, Message } from "./conversation";
+import type { Block, Conversation, Message } from "./conversation";
+import { deleteFigures, figureIds, saveFigures } from "./figure-store";
 
 const MAX_CONVERSATIONS = 50;
 const EMPTY: Conversation[] = [];
@@ -26,10 +27,16 @@ function write(userId: string, conversations: Conversation[]): void {
   }
 }
 
-/** Images are too large for localStorage, and unfinished answers can't resume after a reload. */
+/**
+ * Images are too large for localStorage: graphs are kept in IndexedDB and referenced here by
+ * id, and attachments keep only their previews. Unfinished answers can't resume after a reload.
+ */
 function toStored(message: Message): Message {
   if (message.role === "user") return { ...message, images: undefined };
-  const blocks = message.blocks.filter((block) => block.kind !== "image");
+  const blocks = message.blocks.flatMap((block): Block[] => {
+    if (block.kind !== "image") return [block];
+    return block.id ? [{ kind: "image", mimeType: block.mimeType, data: "", id: block.id }] : [];
+  });
   if (message.phase === "done" || message.phase === "error") return { ...message, blocks };
   return { ...message, blocks, phase: "error", error: "This answer was interrupted." };
 }
@@ -60,12 +67,21 @@ function subscribe(listener: () => void): () => void {
 /** Per-user question history, kept in this browser's localStorage. */
 export const historyStore = {
   save(userId: string, conversation: Conversation): void {
+    void saveFigures(conversation);
     const stored = { ...conversation, messages: conversation.messages.map(toStored) };
-    update(userId, (all) =>
-      [stored, ...all.filter((item) => item.id !== conversation.id)].slice(0, MAX_CONVERSATIONS),
+    const previous = getSnapshot(userId);
+    const next = [stored, ...previous.filter((item) => item.id !== conversation.id)].slice(
+      0,
+      MAX_CONVERSATIONS,
     );
+    // Conversations that fall off the end of the history take their graphs with them.
+    const kept = new Set(next.map((item) => item.id));
+    void deleteFigures(previous.filter((item) => !kept.has(item.id)).flatMap(figureIds));
+    update(userId, () => next);
   },
   remove(userId: string, id: string): void {
+    const removed = getSnapshot(userId).find((item) => item.id === id);
+    if (removed) void deleteFigures(figureIds(removed));
     update(userId, (all) => all.filter((item) => item.id !== id));
   },
   setBookmarked(userId: string, id: string, bookmarked: boolean): void {

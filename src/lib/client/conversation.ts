@@ -5,7 +5,8 @@ import { extractTopic, stripComments } from "./answer-text";
 export type Block =
   | { kind: "text"; text: string }
   | { kind: "code"; code: string; output?: string; ok?: boolean }
-  | { kind: "image"; mimeType: string; data: string };
+  /** `id` names the graph in browser storage; saved history keeps the id with empty data. */
+  | { kind: "image"; mimeType: string; data: string; id?: string };
 
 /** What history keeps of an attachment: a small thumbnail for photos, the name for PDFs. */
 export interface AttachmentPreview {
@@ -111,7 +112,10 @@ export function applyEvent(message: AssistantMessage, event: StreamEvent): Assis
     case "image":
       return {
         ...message,
-        blocks: [...message.blocks, { kind: "image", mimeType: event.mimeType, data: event.data }],
+        blocks: [
+          ...message.blocks,
+          { kind: "image", mimeType: event.mimeType, data: event.data, id: newId() },
+        ],
       };
     case "reset":
       return {

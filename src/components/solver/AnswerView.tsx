@@ -181,8 +181,12 @@ export function AnswerView({ message, isLatest, showModel, onAction, onRetry }: 
   const elapsed = useElapsedSeconds(streaming);
   const progress = streaming ? progressLabel(message) : null;
   const finished = message.phase === "done";
+  // A saved graph appears once it has been read back from browser storage.
   const content = arrangeContent(
-    message.blocks.filter((block): block is ContentBlock => block.kind !== "code"),
+    message.blocks.filter(
+      (block): block is ContentBlock =>
+        block.kind !== "code" && !(block.kind === "image" && !block.data),
+    ),
   );
   const calculations = message.blocks.filter((block): block is CodeBlock => block.kind === "code");
 

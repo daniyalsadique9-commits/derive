@@ -12,6 +12,7 @@ import {
   type Conversation,
   type UserMessage,
 } from "./conversation";
+import { figureIds, loadFigures } from "./figure-store";
 import { historyStore } from "./history-store";
 import { makePreview } from "./image";
 import { streamSolve } from "./solve-client";
@@ -76,9 +77,43 @@ function updateAnswer(
   });
 }
 
+/** Reads a reopened conversation's graphs back from browser storage and shows them. */
+async function restoreFigures(userId: string, conversation: Conversation): Promise<void> {
+  const missing = figureIds(conversation).filter((id) =>
+    conversation.messages.some(
+      (message) =>
+        message.role === "assistant" &&
+        message.blocks.some((block) => block.kind === "image" && block.id === id && !block.data),
+    ),
+  );
+  if (missing.length === 0) return;
+  const figures = await loadFigures(missing);
+  const current = read(userId).conversation;
+  if (current?.id !== conversation.id) return;
+  write(userId, {
+    conversation: {
+      ...current,
+      messages: current.messages.map((message) =>
+        message.role !== "assistant"
+          ? message
+          : {
+              ...message,
+              // A graph that can't be read back is left out rather than shown broken.
+              blocks: message.blocks.flatMap((block) => {
+                if (block.kind !== "image" || block.data || !block.id) return [block];
+                const figure = figures.get(block.id);
+                return figure ? [{ ...block, ...figure }] : [];
+              }),
+            },
+      ),
+    },
+  });
+}
+
 export const solverSession = {
   open(userId: string, conversation: Conversation | null): void {
     write(userId, { conversation });
+    if (conversation) void restoreFigures(userId, conversation);
   },
 
   stop(userId: string): void {
