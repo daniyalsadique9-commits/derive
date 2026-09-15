@@ -18,6 +18,13 @@ const LONG_CONTEXT_CHARS = 12_000;
 /** Reading a photo or PDF takes longer before the first word than a typed question. */
 const ATTACHMENT_FIRST_TOKEN_MS = 45_000;
 
+/** Real devices with chips and connectors can't be drawn accurately as a one-loop circuit. */
+const SYSTEM_DEVICE =
+  /\b(laptops?|battery pack|bms|power supply|smps|charger|inverter|ups|motherboard|mobile phone|smartphone)\b/i;
+const DIAGRAM_REQUEST = /\b(circuit|diagram|schematic)s?\b/i;
+const BLOCK_DIAGRAM_REMINDER =
+  "(Show this as an accurate Mermaid block diagram, not as a circuit block.)";
+
 /** Long, multi-part questions and proofs: they need a larger output budget and aren't cross-checked. */
 function isLongDerivation(content: string): boolean {
   return content.length > 500 || PROOF_REQUEST.test(content);
@@ -32,21 +39,20 @@ function recentTurns(messages: ChatTurn[]): ChatTurn[] {
     .map((turn, index, all) => (index === all.length - 1 ? turn : { ...turn, images: undefined }));
 }
 
-/** Real devices with chips and connectors can't be drawn accurately as a one-loop circuit. */
-const SYSTEM_DEVICE =
-  /\b(laptops?|battery pack|bms|power supply|smps|charger|inverter|ups|motherboard|mobile phone|smartphone)\b/i;
-const DIAGRAM_REQUEST = /\b(circuit|diagram|schematic)s?\b/i;
-const BLOCK_DIAGRAM_REMINDER =
-  "(Show this as an accurate Mermaid block diagram, not as a circuit block.)";
-
-/** Steers diagram requests about whole devices to a block diagram, even as a follow-up. */
-function withDiagramReminder(turns: ChatTurn[]): ChatTurn[] {
+/** A diagram request about a whole device, including a follow-up such as "can I get a diagram". */
+function isDeviceDiagramRequest(turns: ChatTurn[]): boolean {
   const latest = turns[turns.length - 1];
   const asked = turns
     .filter((turn) => turn.role === "user")
     .map((turn) => turn.content)
     .join(" ");
-  if (!latest || !DIAGRAM_REQUEST.test(latest.content) || !SYSTEM_DEVICE.test(asked)) return turns;
+  return latest !== undefined && DIAGRAM_REQUEST.test(latest.content) && SYSTEM_DEVICE.test(asked);
+}
+
+/** Repeats the block-diagram instruction on the question itself, where models notice it most. */
+function withDiagramReminder(turns: ChatTurn[]): ChatTurn[] {
+  if (!isDeviceDiagramRequest(turns)) return turns;
+  const latest = turns[turns.length - 1];
   return [
     ...turns.slice(0, -1),
     { ...latest, content: `${latest.content}\n\n${BLOCK_DIAGRAM_REMINDER}` },
@@ -69,8 +75,15 @@ function withLanguageReminder(turns: ChatTurn[], language: AnswerLanguage): Chat
  */
 function planAttempts(turns: ChatTurn[], request: SolveRequest): Attempt[] {
   const latest = turns[turns.length - 1];
+  // Whole devices are shown as block diagrams: offering the circuit format pushes the model
+  // into an inaccurate one-loop drawing.
+  const circuits = !isDeviceDiagramRequest(turns);
   const gemini = geminiAttempts({
-    system: buildSystemPrompt(request.style, request.language, { canRunCode: true, canPlot: true }),
+    system: buildSystemPrompt(request.style, request.language, {
+      canRunCode: true,
+      canPlot: true,
+      circuits,
+    }),
     turns,
   });
   if ((latest?.images?.length ?? 0) > 0) return gemini;
@@ -79,6 +92,7 @@ function planAttempts(turns: ChatTurn[], request: SolveRequest): Attempt[] {
     system: buildSystemPrompt(request.style, request.language, {
       canRunCode: true,
       canPlot: false,
+      circuits,
     }),
     turns,
     runCode: true,

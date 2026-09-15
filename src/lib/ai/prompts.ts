@@ -71,9 +71,12 @@ When a circuit diagram would help, or the student asks for one, never draw it wi
 \`\`\`circuit
 {"title": "RC charging circuit", "source": {"type": "battery", "label": "10 V"}, "elements": [{"type": "switch", "label": "S"}, {"type": "resistor", "label": "R = 1 kΩ"}, {"type": "parallel", "branches": [[{"type": "capacitor", "label": "C = 100 µF"}], [{"type": "voltmeter"}]]}]}
 \`\`\`
-The source sits on the left and the elements follow in series around the loop, in order. Use "parallel" with two to four branches for parts connected in parallel; each branch is a list of parts in series. Part types: resistor, capacitor, inductor, diode, led, lamp, switch, fuse, ammeter, voltmeter, galvanometer, battery. Source types: battery, ac_source. Keep labels short, with values and units, and describe only the main loop: chips, transistors, connectors and sensors cannot be drawn here. For a system such as a laptop, a battery pack with a controller chip or a power supply, draw a Mermaid block diagram instead, and keep it technically accurate: show what each block measures or controls and where. For example, a laptop battery pack's BMS chip reads every cell's voltage through its own sense wire, measures current through a sense resistor inside the pack, and switches two separate back-to-back MOSFETs, one for charging and one for discharging; it does not measure the laptop's load. The charger and the pack both connect to the laptop's system power rail: when plugged in, the charger powers the laptop directly and charges the cells backwards through those MOSFETs, and when unplugged the pack supplies the same rail. Never show the JSON as text, never mention JSON or the format, and never add a heading such as "Full circuit": the student only sees the finished drawing.`;
+The source sits on the left and the elements follow in series around the loop, in order. Use "parallel" with two to four branches for parts connected in parallel; each branch is a list of parts in series. Part types: resistor, capacitor, inductor, diode, led, lamp, switch, fuse, ammeter, voltmeter, galvanometer, battery. Source types: battery, ac_source. Keep labels short, with values and units, and describe only the main loop: chips, transistors, connectors and sensors cannot be drawn here. For a system such as a laptop, a battery pack with a controller chip or a power supply, draw a Mermaid block diagram instead. Never show the JSON as text, never mention JSON or the format, and never add a heading such as "Full circuit": the student only sees the finished drawing.`;
 
 const NO_PLOT_PROMPT = `You cannot produce images. If a picture would help, use a Mermaid diagram or a small table instead.`;
+
+const DEVICE_DIAGRAM_PROMPT = `# Diagrams of devices
+This question is about a whole device, so show any diagram as a Mermaid block diagram (\`flowchart LR\`) in a \`\`\`mermaid code block, never as a circuit drawing or JSON. Name each block, label the arrows with what flows along them (power, a sense signal, a control signal or data), and keep it technically accurate. For example, in a laptop battery pack the cells in series each have their own sense wire to the BMS chip, which also reads a current-sense resistor inside the pack and drives two separate back-to-back MOSFETs, one for charging and one for discharging; it does not measure the laptop's load. The charger and the pack both connect to the laptop's system power rail: when plugged in, the charger powers the laptop directly and charges the cells backwards through those MOSFETs, and when unplugged the pack supplies the same rail.`;
 
 const STYLE_PROMPTS: Record<ExplanationStyle, string> = {
   intuitive:
@@ -117,13 +120,14 @@ const INTENT_PROMPTS: Record<Exclude<Intent, "ask">, string> = {
 export function buildSystemPrompt(
   style: ExplanationStyle,
   language: AnswerLanguage,
-  capabilities: { canRunCode: boolean; canPlot: boolean },
+  /** `circuits` is false for questions about whole devices, which get block diagrams instead. */
+  capabilities: { canRunCode: boolean; canPlot: boolean; circuits: boolean },
 ): string {
   return [
     BASE_PROMPT,
     capabilities.canRunCode ? CODE_TOOL_PROMPT : "",
     capabilities.canPlot ? PLOT_PROMPT : NO_PLOT_PROMPT,
-    CIRCUIT_PROMPT,
+    capabilities.circuits ? CIRCUIT_PROMPT : DEVICE_DIAGRAM_PROMPT,
     STYLE_PROMPTS[style],
     LANGUAGE_PROMPTS[language],
   ]
