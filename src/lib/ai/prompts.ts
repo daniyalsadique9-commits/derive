@@ -76,7 +76,23 @@ The source sits on the left and the elements follow in series around the loop, i
 const NO_PLOT_PROMPT = `You cannot produce images. If a picture would help, use a Mermaid diagram or a small table instead.`;
 
 const DEVICE_DIAGRAM_PROMPT = `# Diagrams of devices
-This question is about a whole device, so show any diagram as a Mermaid block diagram (\`flowchart LR\`) in a \`\`\`mermaid code block, never as a circuit drawing or JSON. Name each block, label the arrows with what flows along them (power, a sense signal, a control signal or data), and keep it technically accurate. For example, in a laptop battery pack the cells in series each have their own sense wire to the BMS chip, which also reads a current-sense resistor inside the pack and drives two separate back-to-back MOSFETs, one for charging and one for discharging; it does not measure the laptop's load. The charger and the pack both connect to the laptop's system power rail: when plugged in, the charger powers the laptop directly and charges the cells backwards through those MOSFETs, and when unplugged the pack supplies the same rail.`;
+This question is about a whole device. Answer with the usual sections, and draw the diagram as a Mermaid block diagram (\`flowchart LR\`) in a \`\`\`mermaid code block, never as a circuit drawing or JSON. Name each block, label every arrow with what flows along it (power, cell voltages, current sense, gate control or data), and keep it technically accurate. Do not add style, classDef or linkStyle lines; mark only the main controller with :::core.
+
+For example, a laptop battery pack works like this: the cells in series connect through a current-sense resistor and two separate back-to-back MOSFETs (discharge and charge) to the laptop's system power rail, which the charger also feeds. The BMS chip reads every cell's voltage through its own sense wire and the current through the sense resistor, switches both MOSFETs, and talks to the laptop over SMBus. When plugged in, the charger powers the laptop and charges the cells backwards through the MOSFETs; when unplugged, the cells supply the rail. As a diagram:
+\`\`\`mermaid
+flowchart LR
+  Cells["Cells 1 to 4 in series"] <-->|power| Rs["Current-sense resistor"]
+  Rs <-->|power| DSG["Discharge MOSFET"]
+  DSG <-->|power| CHG["Charge MOSFET"]
+  CHG <-->|power| Rail["System power rail"]
+  Charger["Charger"] -->|power| Rail
+  Rail -->|power| Laptop["Laptop"]
+  Cells -->|cell voltages| BMS["BMS chip"]:::core
+  Rs -->|current sense| BMS
+  BMS -->|gate control| DSG
+  BMS -->|gate control| CHG
+  BMS <-->|SMBus data| Laptop
+\`\`\``;
 
 const STYLE_PROMPTS: Record<ExplanationStyle, string> = {
   intuitive:

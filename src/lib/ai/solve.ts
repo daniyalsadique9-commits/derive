@@ -23,7 +23,7 @@ const SYSTEM_DEVICE =
   /\b(laptops?|battery pack|bms|power supply|smps|charger|inverter|ups|motherboard|mobile phone|smartphone)\b/i;
 const DIAGRAM_REQUEST = /\b(circuit|diagram|schematic)s?\b/i;
 const BLOCK_DIAGRAM_REMINDER =
-  "(Show this as an accurate Mermaid block diagram, not as a circuit block.)";
+  "(Answer as usual, and draw the diagram as an accurate Mermaid block diagram, not as a circuit block.)";
 
 /** Long, multi-part questions and proofs: they need a larger output budget and aren't cross-checked. */
 function isLongDerivation(content: string): boolean {

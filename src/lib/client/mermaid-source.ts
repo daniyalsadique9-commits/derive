@@ -117,6 +117,8 @@ export function quoteMermaidLabels(source: string): string {
   );
 }
 
+const KNOWN_CLASSES = new Set(["core", "formula", "example"]);
+
 /** Colours for the node classes the model is asked to use in flowcharts. */
 const FLOWCHART_CLASSES = [
   "classDef core fill:#d0161f,stroke:#b01219,color:#ffffff,font-weight:600",
@@ -130,6 +132,13 @@ export function prepareMermaid(source: string): string {
     .replace(/"([^"\n]*)"/g, (_, label: string) => `"${plainMathLabel(label)}"`)
     .replace(/\|([^|\n]+)\|/g, (_, label: string) => `|${plainMathLabel(label)}|`);
   if (!/^\s*(flowchart|graph)\b/.test(prepared)) return prepared;
-  // Mermaid rejects a space before a class, as in A["Force"] :::core.
-  return `${prepared.replace(/\s+:::(\w+)/g, ":::$1").trimEnd()}\n${FLOWCHART_CLASSES}`;
+  // The model's own colours give way to the app's palette, only the app's classes are kept,
+  // and Mermaid rejects a space before a class, as in A["Force"] :::core.
+  const body = prepared
+    .split("\n")
+    .filter((line) => !/^\s*(classDef|class|style|linkStyle)\b/.test(line))
+    .join("\n")
+    .replace(/\s*:::(\w+)/g, (_, name: string) => (KNOWN_CLASSES.has(name) ? `:::${name}` : ""))
+    .trimEnd();
+  return `${body}\n${FLOWCHART_CLASSES}`;
 }

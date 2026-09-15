@@ -96,11 +96,12 @@ export function MermaidDiagram({ source, ready }: MermaidDiagramProps) {
     );
   }
 
+  // Students never see diagram source code, even when it can't be drawn.
   if (state.status === "failed") {
     return (
-      <pre>
-        <code>{source}</code>
-      </pre>
+      <p className="not-prose my-5 rounded-xl border border-dashed border-line px-4 py-3 text-sm text-ink-muted">
+        This diagram could not be drawn. Ask again and it will be redrawn.
+      </p>
     );
   }
 
