@@ -5,6 +5,7 @@ import { singleton } from "./singleton";
 
 const DATA_DIR = path.join(process.cwd(), ".data");
 const SETTINGS_FILE = path.join(DATA_DIR, "admin.json");
+const USAGE_FILE = path.join(DATA_DIR, "usage.json");
 
 interface DailyUsage {
   day: string;
@@ -18,8 +19,8 @@ function today(): string {
 }
 
 /**
- * Admin settings and blocked users are saved to disk so they survive restarts.
- * Usage counts are kept in memory and reset each day.
+ * Admin settings, blocked users and today's usage counts are saved to disk, so a restart
+ * neither loses settings nor resets anyone's daily limit.
  */
 class AdminStore {
   settings: AdminSettings;
@@ -31,6 +32,7 @@ class AdminStore {
     const saved = this.load();
     this.settings = saved.settings;
     this.blocked = new Set(saved.blocked);
+    this.loadUsage();
   }
 
   isBlocked(userId: string): boolean {
@@ -56,9 +58,10 @@ class AdminStore {
     });
     if (this.total.day !== day) this.total = { day, count: 0 };
     this.total.count += 1;
+    this.persistUsage();
   }
 
-  /** Everyone seen since the server started, plus blocked users. */
+  /** Everyone seen today, plus blocked users. */
   activity(): { userId: string; requestsToday: number; lastAt: number | null; blocked: boolean }[] {
     const ids = new Set([...this.usage.keys(), ...this.blocked]);
     return [...ids].map((userId) => ({
@@ -102,14 +105,48 @@ class AdminStore {
   }
 
   private persist(): void {
+    this.write(SETTINGS_FILE, { settings: this.settings, blocked: [...this.blocked] });
+  }
+
+  /** Restores today's counts; counts from an earlier day are dropped. */
+  private loadUsage(): void {
+    try {
+      const raw = JSON.parse(readFileSync(USAGE_FILE, "utf8")) as {
+        day?: unknown;
+        total?: unknown;
+        users?: Record<string, { count?: unknown; lastAt?: unknown }>;
+      };
+      if (raw.day !== today()) return;
+      this.total = { day: raw.day, count: typeof raw.total === "number" ? raw.total : 0 };
+      for (const [userId, entry] of Object.entries(raw.users ?? {})) {
+        if (typeof entry.count !== "number") continue;
+        this.usage.set(userId, {
+          day: raw.day,
+          count: entry.count,
+          lastAt: typeof entry.lastAt === "number" ? entry.lastAt : Date.now(),
+        });
+      }
+    } catch {
+      // No saved usage yet.
+    }
+  }
+
+  private persistUsage(): void {
+    const day = today();
+    const users = Object.fromEntries(
+      [...this.usage]
+        .filter(([, usage]) => usage.day === day)
+        .map(([userId, usage]) => [userId, { count: usage.count, lastAt: usage.lastAt }]),
+    );
+    this.write(USAGE_FILE, { day, total: this.totalToday(), users });
+  }
+
+  private write(file: string, data: unknown): void {
     try {
       mkdirSync(DATA_DIR, { recursive: true });
-      writeFileSync(
-        SETTINGS_FILE,
-        JSON.stringify({ settings: this.settings, blocked: [...this.blocked] }, null, 2),
-      );
+      writeFileSync(file, JSON.stringify(data, null, 2));
     } catch (error) {
-      console.warn("[admin] could not save settings", error);
+      console.warn(`[admin] could not save ${path.basename(file)}`, error);
     }
   }
 }

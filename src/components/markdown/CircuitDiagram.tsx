@@ -107,7 +107,33 @@ function partSymbol(type: Part["type"]): ReactNode {
           <line x1={6} y1={0} x2={30} y2={0} />
         </>
       );
+    case "block":
+      return (
+        <>
+          <line x1={-30} y1={0} x2={-24} y2={0} />
+          <rect x={-24} y={-14} width={48} height={28} rx={4} fill="#f6f3ec" />
+          <line x1={24} y1={0} x2={30} y2={0} />
+        </>
+      );
   }
+}
+
+/** Splits a label into at most two short lines so neighbouring labels never overlap. */
+function labelLines(label: string, maxChars = 16): string[] {
+  const lines: string[] = [];
+  for (const word of label.split(/\s+/)) {
+    const last = lines.at(-1);
+    if (last !== undefined && `${last} ${word}`.length <= maxChars) {
+      lines[lines.length - 1] = `${last} ${word}`;
+    } else {
+      lines.push(word);
+    }
+  }
+  if (lines.length > 2) {
+    lines.length = 2;
+    lines[1] = `${lines[1].slice(0, maxChars - 1)}…`;
+  }
+  return lines;
 }
 
 function PartAt({ part, x1, x2, y }: { part: Part; x1: number; x2: number; y: number }) {
@@ -118,8 +144,12 @@ function PartAt({ part, x1, x2, y }: { part: Part; x1: number; x2: number; y: nu
       <line x1={cx + 30} y1={y} x2={x2} y2={y} />
       <g transform={`translate(${cx} ${y})`}>{partSymbol(part.type)}</g>
       {part.label && (
-        <text {...textProps} x={cx} y={y - 24} textAnchor="middle">
-          {part.label}
+        <text {...textProps} x={cx} y={y - 24 - (labelLines(part.label).length - 1) * 15}>
+          {labelLines(part.label).map((line, index) => (
+            <tspan key={index} x={cx} dy={index === 0 ? 0 : 15} textAnchor="middle">
+              {line}
+            </tspan>
+          ))}
         </text>
       )}
     </g>
@@ -268,11 +298,12 @@ export function CircuitDiagram({ source, ready }: CircuitDiagramProps) {
       </div>
     );
   }
+  // Students never see the raw description, even when it can't be drawn.
   if (!circuit) {
     return (
-      <pre>
-        <code>{source}</code>
-      </pre>
+      <p className="not-prose my-5 rounded-xl border border-dashed border-line px-4 py-3 text-sm text-ink-muted">
+        This circuit could not be drawn. Ask for a simpler circuit, or for a block diagram.
+      </p>
     );
   }
 

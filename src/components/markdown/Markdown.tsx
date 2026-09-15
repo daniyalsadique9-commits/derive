@@ -34,7 +34,11 @@ function buildComponents(streaming: boolean): Components {
       if (block?.language === "mermaid") {
         return <MermaidDiagram source={block.source} ready={!streaming} />;
       }
-      if (block?.language === "circuit") {
+      // Models sometimes label a circuit description as plain JSON; draw it all the same.
+      const isCircuit =
+        block?.language === "circuit" ||
+        (block?.language === "json" && /"elements"\s*:/.test(block.source));
+      if (block && isCircuit) {
         return <CircuitDiagram source={block.source} ready={!streaming} />;
       }
       return <pre>{children}</pre>;
