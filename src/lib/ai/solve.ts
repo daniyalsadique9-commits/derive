@@ -32,6 +32,27 @@ function recentTurns(messages: ChatTurn[]): ChatTurn[] {
     .map((turn, index, all) => (index === all.length - 1 ? turn : { ...turn, images: undefined }));
 }
 
+/** Real devices with chips and connectors can't be drawn accurately as a one-loop circuit. */
+const SYSTEM_DEVICE =
+  /\b(laptops?|battery pack|bms|power supply|smps|charger|inverter|ups|motherboard|mobile phone|smartphone)\b/i;
+const DIAGRAM_REQUEST = /\b(circuit|diagram|schematic)s?\b/i;
+const BLOCK_DIAGRAM_REMINDER =
+  "(Show this as an accurate Mermaid block diagram, not as a circuit block.)";
+
+/** Steers diagram requests about whole devices to a block diagram, even as a follow-up. */
+function withDiagramReminder(turns: ChatTurn[]): ChatTurn[] {
+  const latest = turns[turns.length - 1];
+  const asked = turns
+    .filter((turn) => turn.role === "user")
+    .map((turn) => turn.content)
+    .join(" ");
+  if (!latest || !DIAGRAM_REQUEST.test(latest.content) || !SYSTEM_DEVICE.test(asked)) return turns;
+  return [
+    ...turns.slice(0, -1),
+    { ...latest, content: `${latest.content}\n\n${BLOCK_DIAGRAM_REMINDER}` },
+  ];
+}
+
 /** Adds the answer-language reminder to the latest turn, where models notice it most. */
 function withLanguageReminder(turns: ChatTurn[], language: AnswerLanguage): ChatTurn[] {
   const reminder = languageReminder(language);
@@ -78,7 +99,9 @@ export async function* solve(
   signal: AbortSignal,
   options: { verify: boolean },
 ): AsyncGenerator<StreamEvent> {
-  const turns = withLanguageReminder(recentTurns(request.messages), request.language);
+  const turns = withDiagramReminder(
+    withLanguageReminder(recentTurns(request.messages), request.language),
+  );
   const latest = turns[turns.length - 1];
   const hasAttachments = (latest?.images?.length ?? 0) > 0;
   const answer = yield* streamFirstAvailable(

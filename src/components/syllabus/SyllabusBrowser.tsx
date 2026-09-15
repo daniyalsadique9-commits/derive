@@ -187,7 +187,7 @@ function CourseCard({
         )}
       </div>
 
-      <details open={matchesTopic} className="group border-t border-line">
+      <details open={matchesTopic} className="group mt-auto border-t border-line">
         <summary className="flex cursor-pointer list-none items-center justify-between px-5 py-3 text-sm font-medium text-ink-muted select-none hover:text-ink">
           {theory ? "Units and topics" : "Experiments"}
           <ChevronDown className="size-4 transition-transform group-open:rotate-180" />
@@ -240,7 +240,7 @@ function CourseCard({
         )}
       </details>
 
-      <div className="mt-auto flex items-center gap-4 border-t border-line px-5 py-3 text-sm">
+      <div className="flex items-center gap-4 border-t border-line px-5 py-3 text-sm">
         <a
           href={`${file}#page=${course.page}`}
           target="_blank"
@@ -355,7 +355,7 @@ export function SyllabusBrowser({ syllabus }: { syllabus: Syllabus }) {
       </div>
 
       {courses.length > 0 ? (
-        <ul className="grid items-start gap-4 lg:grid-cols-2">
+        <ul className="grid gap-4 lg:grid-cols-2">
           {courses.map((course) => (
             <CourseCard key={course.code} course={course} file={syllabus.file} needle={needle} />
           ))}

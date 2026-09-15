@@ -5,7 +5,7 @@ import { Lightbox } from "@/components/ui/Lightbox";
 import { parseCircuit, type Circuit, type Part } from "@/lib/client/circuit";
 
 /** Drawing units: one part along a wire, the gap between parallel branches, and margins. */
-const SLOT = 110;
+const SLOT = 124;
 const ROW = 96;
 const TOP = 70;
 const LEFT = 120;
@@ -120,8 +120,14 @@ function partSymbol(type: Part["type"]): ReactNode {
 
 /** Splits a label into at most two short lines so neighbouring labels never overlap. */
 function labelLines(label: string, maxChars = 16): string[] {
+  // Break at slashes, then cut any word that is still too long to fit.
+  const words = label
+    .replace(/\//g, "/ ")
+    .split(/\s+/)
+    .filter(Boolean)
+    .flatMap((word) => word.match(new RegExp(`.{1,${maxChars}}`, "g")) ?? [word]);
   const lines: string[] = [];
-  for (const word of label.split(/\s+/)) {
+  for (const word of words) {
     const last = lines.at(-1);
     if (last !== undefined && `${last} ${word}`.length <= maxChars) {
       lines[lines.length - 1] = `${last} ${word}`;
