@@ -18,6 +18,9 @@ const ALL_BUSY_MESSAGE = "All models are at capacity right now. Please try again
 const TOO_LONG_MESSAGE =
   "This question needs more working than fits in one answer. Try asking one part at a time.";
 
+/** How many times an answer that breaks partway is started again on another model. */
+const MAX_RESTARTS = 2;
+
 function orderedSlots(provider: Slot["provider"], model: string, keyCount: number): Slot[] {
   const tokens = provider === "groq" ? aiConfig.groq.estimatedAnswerTokens : 0;
   return Array.from({ length: keyCount }, (_, keyIndex): Slot => ({ provider, model, keyIndex }))
@@ -114,6 +117,7 @@ export async function* streamFirstAvailable(
   const firstTokenTimeoutMs = options.firstTokenTimeoutMs ?? aiConfig.firstTokenTimeoutMs;
   let producedNothing = false;
   let unavailable = false;
+  let restarts = 0;
 
   for (const attempt of attempts) {
     if (signal.aborted) return null;
@@ -156,8 +160,17 @@ export async function* streamFirstAvailable(
       if (signal.aborted) return null;
       console.warn(`[fallback] stream broke on ${attempt.slot.model}: ${describeError(error)}`);
       if (text) {
-        yield { type: "error", message: "The answer was interrupted. Please try again." };
-        return null;
+        // A model that fails partway, for example with "high demand", is replaced by the next
+        // one, which writes the answer again from the start.
+        quota.coolDown(attempt.slot, coolDownFor(error));
+        unavailable = true;
+        restarts += 1;
+        if (restarts > MAX_RESTARTS) {
+          yield { type: "error", message: "The answer was interrupted. Please try again." };
+          return null;
+        }
+        yield { type: "reset" };
+        continue;
       }
     }
 

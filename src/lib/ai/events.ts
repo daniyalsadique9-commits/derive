@@ -11,7 +11,7 @@ export type StreamEvent =
   | { type: "start"; provider: ProviderId; model: string }
   /** The model is reasoning before it writes; sent once so the UI can show progress. */
   | { type: "thinking" }
-  /** The model finished without writing an answer; discard its output while the next one tries. */
+  /** The model wrote nothing or failed partway; discard its output while the next one tries. */
   | { type: "reset" }
   | { type: "text"; text: string }
   | { type: "code"; code: string }
