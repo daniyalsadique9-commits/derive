@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { UserButton } from "@clerk/nextjs";
 import {
   BookOpen,
   CalendarRange,
@@ -17,6 +16,7 @@ import { useState } from "react";
 import { Logo } from "@/components/brand/Logo";
 import type { Conversation } from "@/lib/client/conversation";
 import { cn } from "@/lib/utils/cn";
+import { AccountSummary } from "./AccountSummary";
 import { CapacityIndicator } from "./CapacityIndicator";
 
 interface SidebarProps {
@@ -223,7 +223,6 @@ export function Sidebar({
         <div className="space-y-1 border-t border-line p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
           <Link
             href="/plan"
-            prefetch={false}
             className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm text-ink-muted transition-colors hover:bg-subtle hover:text-ink"
           >
             <CalendarRange className="size-4" />
@@ -231,7 +230,6 @@ export function Sidebar({
           </Link>
           <Link
             href="/viva"
-            prefetch={false}
             className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm text-ink-muted transition-colors hover:bg-subtle hover:text-ink"
           >
             <ListChecks className="size-4" />
@@ -240,7 +238,6 @@ export function Sidebar({
           {isAdmin && (
             <Link
               href="/admin"
-              prefetch={false}
               className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm text-ink-muted transition-colors hover:bg-subtle hover:text-ink"
             >
               <SlidersHorizontal className="size-4" />
@@ -255,10 +252,7 @@ export function Sidebar({
             Syllabus
           </Link>
           <CapacityIndicator refreshKey={capacityRefreshKey} />
-          <div className="flex items-center gap-2.5 px-2 pt-2">
-            <UserButton />
-            <span className="text-sm text-ink-muted">Account</span>
-          </div>
+          <AccountSummary />
         </div>
       </aside>
     </>

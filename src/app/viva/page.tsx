@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
-import { currentUser } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { VivaGenerator } from "@/components/viva/VivaGenerator";
+import { signedInUser } from "@/lib/server/user-profile";
 
 export const metadata: Metadata = { title: "Viva questions" };
 
 export default async function VivaPage() {
-  const user = await currentUser();
+  const user = await signedInUser();
   if (!user) redirect("/sign-in");
 
   return (

@@ -138,7 +138,7 @@ export default function HomePage() {
               {siteConfig.description}
             </p>
             <div className="mt-9 flex flex-wrap gap-3">
-              <Link href="/solve" prefetch={false} className={buttonStyles({ size: "lg" })}>
+              <Link href="/solve" className={buttonStyles({ size: "lg" })}>
                 Start solving
                 <ArrowRight className="size-4" />
               </Link>

@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
-import { currentUser } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { SolverApp } from "@/components/solver/SolverApp";
 import { isAdminUser } from "@/lib/server/admin-auth";
+import { signedInUser } from "@/lib/server/user-profile";
 
 export const metadata: Metadata = { title: "Solve" };
 
 export default async function SolvePage() {
-  const user = await currentUser();
+  const user = await signedInUser();
   if (!user) redirect("/sign-in");
 
   return (

@@ -14,6 +14,9 @@ const PROOF_REQUEST = /\b(prove|derive|show that)\b/i;
  */
 const LONG_CONTEXT_CHARS = 12_000;
 
+/** Reading a photo or PDF takes longer before the first word than a typed question. */
+const ATTACHMENT_FIRST_TOKEN_MS = 45_000;
+
 /** Long, multi-part questions and proofs: they need a larger output budget and aren't cross-checked. */
 function isLongDerivation(content: string): boolean {
   return content.length > 500 || PROOF_REQUEST.test(content);
@@ -57,8 +60,9 @@ function planAttempts(turns: ChatTurn[], request: SolveRequest): Attempt[] {
     }),
     turns,
     runCode: true,
-    // Follow-up actions (practice, simplify, ...) don't need deep reasoning.
-    reasoningEffort: (latest?.intent ?? "ask") === "ask" ? "high" : "medium",
+    // Deep reasoning delays the first word by several seconds, so it is kept for long
+    // derivations; numeric answers are still cross-checked by a second model.
+    reasoningEffort: isLongDerivation(latest?.content ?? "") ? "high" : "medium",
   });
   const content = latest?.content ?? "";
   const contextChars = turns.reduce((sum, turn) => sum + turn.content.length, 0);
@@ -74,10 +78,15 @@ export async function* solve(
   options: { verify: boolean },
 ): AsyncGenerator<StreamEvent> {
   const turns = withLanguageReminder(recentTurns(request.messages), request.language);
-  const answer = yield* streamFirstAvailable(planAttempts(turns, request), signal);
+  const latest = turns[turns.length - 1];
+  const hasAttachments = (latest?.images?.length ?? 0) > 0;
+  const answer = yield* streamFirstAvailable(
+    planAttempts(turns, request),
+    signal,
+    hasAttachments ? { firstTokenTimeoutMs: ATTACHMENT_FIRST_TOKEN_MS } : {},
+  );
   if (answer === null) return;
 
-  const latest = turns[turns.length - 1];
   // A short check can't reliably re-solve a long proof, and a false alarm is worse than none.
   const checkable = (latest?.intent ?? "ask") === "ask" && !isLongDerivation(latest?.content ?? "");
   if (options.verify && checkable) {

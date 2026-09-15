@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
-import { currentUser } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { StudyPlanner } from "@/components/plan/StudyPlanner";
 import { SiteHeader } from "@/components/site/SiteHeader";
+import { signedInUser } from "@/lib/server/user-profile";
 
 export const metadata: Metadata = { title: "Study plan" };
 
 export default async function PlanPage() {
-  const user = await currentUser();
+  const user = await signedInUser();
   if (!user) redirect("/sign-in");
 
   return (

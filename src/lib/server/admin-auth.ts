@@ -1,4 +1,5 @@
-import { currentUser, type User } from "@clerk/nextjs/server";
+import type { User } from "@clerk/nextjs/server";
+import { signedInUser } from "./user-profile";
 
 const ADMIN_EMAILS = new Set(
   (process.env.ADMIN_EMAILS ?? "")
@@ -18,5 +19,5 @@ export function isAdminUser(user: User | null): boolean {
 }
 
 export async function currentUserIsAdmin(): Promise<boolean> {
-  return isAdminUser(await currentUser());
+  return isAdminUser(await signedInUser());
 }

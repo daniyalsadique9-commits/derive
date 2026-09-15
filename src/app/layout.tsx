@@ -39,7 +39,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <ClerkProvider
           appearance={{
             variables: {
-              colorPrimary: "#c2410c",
+              colorPrimary: "#d0161f",
               colorForeground: "#1f1e1b",
               colorBackground: "#ffffff",
               fontFamily: "var(--font-inter)",

@@ -14,10 +14,10 @@ export function SiteHeader() {
           <Link href="/syllabus" className="transition-colors hover:text-ink">
             Syllabus
           </Link>
-          <Link href="/plan" prefetch={false} className="transition-colors hover:text-ink">
+          <Link href="/plan" className="transition-colors hover:text-ink">
             Study plan
           </Link>
-          <Link href="/viva" prefetch={false} className="transition-colors hover:text-ink">
+          <Link href="/viva" className="transition-colors hover:text-ink">
             Viva
           </Link>
         </nav>
@@ -35,7 +35,7 @@ export function SiteHeader() {
             </SignUpButton>
           </Show>
           <Show when="signed-in">
-            <Link href="/solve" prefetch={false} className={buttonStyles()}>
+            <Link href="/solve" className={buttonStyles()}>
               Open app
             </Link>
             <UserButton />

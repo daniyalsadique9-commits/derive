@@ -109,7 +109,9 @@ function withTimeout<T>(promise: Promise<T>, ms: number, onTimeout: () => void):
 export async function* streamFirstAvailable(
   attempts: Attempt[],
   signal: AbortSignal,
+  options: { firstTokenTimeoutMs?: number } = {},
 ): AsyncGenerator<StreamEvent, string | null> {
+  const firstTokenTimeoutMs = options.firstTokenTimeoutMs ?? aiConfig.firstTokenTimeoutMs;
   let producedNothing = false;
   let unavailable = false;
 
@@ -122,7 +124,7 @@ export async function* streamFirstAvailable(
 
     let first: IteratorResult<StreamEvent>;
     try {
-      first = await withTimeout(events.next(), aiConfig.firstTokenTimeoutMs, () =>
+      first = await withTimeout(events.next(), firstTokenTimeoutMs, () =>
         attemptController.abort(),
       );
     } catch (error) {
