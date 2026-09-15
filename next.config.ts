@@ -15,7 +15,8 @@ const nextConfig: NextConfig = {
     const cached = [{ key: "Cache-Control", value: `public, max-age=${ONE_DAY}` }];
     return [
       { source: "/brand/:path*", headers: cached },
-      { source: "/syllabus/:path*", headers: cached },
+      // Only the PDF: the syllabus page itself must always be fresh.
+      { source: "/syllabus/:file(.+\\.pdf)", headers: cached },
     ];
   },
 };

@@ -56,6 +56,23 @@
   color: #1f1e1b;
 }
 
+/*
+ * One focus style everywhere instead of the browser's default box: a soft accent ring for
+ * keyboard focus. Expandable rows get an inner ring, so card edges never clip it.
+ * In the base layer, so components with their own focus style still win.
+ */
+@layer base {
+  :focus-visible {
+    outline: 2px solid color-mix(in srgb, var(--accent) 60%, transparent);
+    outline-offset: 2px;
+  }
+
+  summary:focus-visible {
+    outline: none;
+    box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--accent) 45%, transparent);
+  }
+}
+
 /* Thin scrollbars in the theme's colours instead of the browser default. */
 * {
   scrollbar-width: thin;

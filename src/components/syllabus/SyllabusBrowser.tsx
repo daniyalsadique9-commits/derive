@@ -119,10 +119,13 @@ function CourseCard({
   course,
   file,
   needle,
+  order,
 }: {
   course: SyllabusCourse;
   file: string;
   needle: string;
+  /** Position in the full list, which keeps the one-column order on narrow screens. */
+  order: number;
 }) {
   const { icon: Icon, tile, bar } = SUBJECTS[course.code] ?? FALLBACK_SUBJECT;
   const [lecture, tutorial, practical] = course.ltp;
@@ -133,7 +136,10 @@ function CourseCard({
   const matchesTopic = course.units.some((unit) => isHit(unit.title) || unit.topics.some(isHit));
 
   return (
-    <li className="flex flex-col overflow-hidden rounded-2xl border border-line bg-surface shadow-[0_1px_2px_rgb(0_0_0/0.04)] transition-shadow hover:shadow-[0_12px_32px_-16px_rgb(0_0_0/0.25)]">
+    <li
+      style={{ order }}
+      className="flex flex-col overflow-hidden rounded-2xl border border-line bg-surface shadow-[0_1px_2px_rgb(0_0_0/0.04)] transition-shadow hover:shadow-[0_12px_32px_-16px_rgb(0_0_0/0.25)]"
+    >
       <div className="p-5">
         <div className="flex items-start gap-4">
           <span className={cn("grid size-12 shrink-0 place-items-center rounded-xl", tile)}>
@@ -358,12 +364,26 @@ export function SyllabusBrowser({ syllabus }: { syllabus: Syllabus }) {
       </div>
 
       {courses.length > 0 ? (
-        // Each card keeps its own height, so opening one never stretches its neighbour.
-        <ul className="grid items-start gap-4 lg:grid-cols-2">
-          {courses.map((course) => (
-            <CourseCard key={course.code} course={course} file={syllabus.file} needle={needle} />
+        // Two independent columns: opening a card pushes down only the cards below it, and
+        // the other column carries on, so there is never an empty block beside an open card.
+        // On narrow screens the columns dissolve into one list in the original order.
+        <div className="flex flex-col gap-4 lg:grid lg:grid-cols-2 lg:items-start">
+          {[0, 1].map((column) => (
+            <ul key={column} className="contents lg:flex lg:flex-col lg:gap-4">
+              {courses.map((course, index) =>
+                index % 2 === column ? (
+                  <CourseCard
+                    key={course.code}
+                    course={course}
+                    file={syllabus.file}
+                    needle={needle}
+                    order={index}
+                  />
+                ) : null,
+              )}
+            </ul>
           ))}
-        </ul>
+        </div>
       ) : (
         <p className="rounded-2xl border border-dashed border-line p-10 text-center text-ink-muted">
           No course or topic matches “{query.trim()}”.
