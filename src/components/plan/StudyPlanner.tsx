@@ -91,7 +91,7 @@ export function StudyPlanner({ userId, firstName }: StudyPlannerProps) {
           event.preventDefault();
           createPlan();
         }}
-        className="space-y-6 rounded-2xl border border-line bg-surface p-5 sm:p-6 print:hidden"
+        className="space-y-6 rounded-2xl border border-line bg-surface p-5 sm:p-6 lg:sticky lg:top-24 lg:max-h-[calc(100dvh-7rem)] lg:overflow-y-auto print:hidden"
       >
         <div>
           <FieldLabel>Courses and how confident you feel</FieldLabel>

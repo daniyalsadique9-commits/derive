@@ -251,7 +251,7 @@ export function Sidebar({
             <BookOpen className="size-4" />
             Syllabus
           </Link>
-          <CapacityIndicator refreshKey={capacityRefreshKey} />
+          <CapacityIndicator refreshKey={capacityRefreshKey} detailed={isAdmin} />
           <AccountSummary />
         </div>
       </aside>

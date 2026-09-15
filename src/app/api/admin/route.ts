@@ -1,16 +1,24 @@
 import { adminSettingsSchema, userActionSchema } from "@/lib/admin/types";
-import { currentUserIsAdmin } from "@/lib/server/admin-auth";
+import { isAdminUser } from "@/lib/server/admin-auth";
+import { hasAdminSession } from "@/lib/server/admin-session";
 import { adminState } from "@/lib/server/admin-state";
 import { adminStore } from "@/lib/server/admin-store";
+import { signedInUser } from "@/lib/server/user-profile";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-/** Non-admins get a 404 so the endpoint's existence isn't revealed. */
+/**
+ * Non-admins get a 404 so the endpoint's existence isn't revealed; admins who haven't entered
+ * the admin password get a 401.
+ */
 async function forbidden(): Promise<Response | null> {
-  return (await currentUserIsAdmin())
-    ? null
-    : Response.json({ error: "Not found." }, { status: 404 });
+  const user = await signedInUser();
+  if (!user || !isAdminUser(user)) return Response.json({ error: "Not found." }, { status: 404 });
+  if (!(await hasAdminSession(user.id))) {
+    return Response.json({ error: "Admin sign-in required." }, { status: 401 });
+  }
+  return null;
 }
 
 export async function GET() {

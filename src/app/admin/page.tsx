@@ -1,16 +1,20 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { AdminPanel } from "@/components/admin/AdminPanel";
+import { AdminSignIn } from "@/components/admin/AdminSignIn";
 import { SiteHeader } from "@/components/site/SiteHeader";
-import { currentUserIsAdmin } from "@/lib/server/admin-auth";
+import { isAdminUser } from "@/lib/server/admin-auth";
+import { hasAdminSession } from "@/lib/server/admin-session";
 import { adminState } from "@/lib/server/admin-state";
+import { signedInUser } from "@/lib/server/user-profile";
 
 export const metadata: Metadata = { title: "Admin" };
 export const dynamic = "force-dynamic";
 
 export default async function AdminPage() {
-  if (!(await currentUserIsAdmin())) notFound();
-  const initialState = await adminState();
+  const user = await signedInUser();
+  if (!user || !isAdminUser(user)) notFound();
+  const unlocked = await hasAdminSession(user.id);
 
   return (
     <div className="flex min-h-dvh flex-col">
@@ -20,7 +24,7 @@ export default async function AdminPage() {
         <p className="mt-3 mb-8 max-w-2xl leading-relaxed text-ink-muted">
           Monitor usage and control who can use Derive and how much.
         </p>
-        <AdminPanel initialState={initialState} />
+        {unlocked ? <AdminPanel initialState={await adminState()} /> : <AdminSignIn />}
       </main>
     </div>
   );

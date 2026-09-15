@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { Check, ChevronRight, Copy, Loader2, RotateCcw, TriangleAlert } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { LogoMark } from "@/components/brand/Logo";
@@ -14,6 +13,7 @@ import {
 } from "@/lib/client/conversation";
 import { toDataUrl } from "@/lib/client/image";
 import { cn } from "@/lib/utils/cn";
+import { AnswerFigure } from "./AnswerFigure";
 import { ANSWER_ACTIONS, INTENT_DETAILS, type AnswerAction } from "./intents";
 import { shortModelName } from "./model-name";
 import { VerificationBadge, VerificationPending } from "./VerificationBadge";
@@ -64,18 +64,7 @@ function ContentView({ block, streaming }: { block: ContentBlock; streaming: boo
   if (block.kind === "text") {
     return <Markdown text={toRenderableMarkdown(block.text)} streaming={streaming} />;
   }
-  return (
-    <figure className="overflow-hidden rounded-xl border border-line bg-white">
-      <Image
-        src={toDataUrl(block)}
-        alt="Graph for this answer"
-        width={1200}
-        height={900}
-        unoptimized
-        className="h-auto w-full"
-      />
-    </figure>
-  );
+  return <AnswerFigure src={toDataUrl(block)} />;
 }
 
 /** The code behind computed results, collapsed by default. */

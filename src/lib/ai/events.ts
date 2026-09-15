@@ -38,4 +38,6 @@ export interface ProviderHealth {
 export interface CapacityReport {
   providers: ProviderHealth[];
   checkedAt: number;
+  /** The signed-in student's own requests today and daily limit. */
+  allowance?: { usedToday: number; dailyLimit: number };
 }

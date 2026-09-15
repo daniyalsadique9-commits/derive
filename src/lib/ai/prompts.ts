@@ -64,7 +64,9 @@ Short sentences and everyday words, with a one-line explanation of each technica
 const CODE_TOOL_PROMPT = `# Tools
 You have a Python tool. Use it to compute or check every numeric result. In your answer, present results as normal working: never mention Python, code, tools, or that a calculation was run.`;
 
-const PLOT_PROMPT = `When a graph would help understanding, or the student asks for one, draw it with matplotlib using the Python tool: clear title, labelled axes with units, and a grid. Draw each graph once, in its final form. In the answer, call it "the graph" without saying where it appears (not "above" or "below").`;
+const PLOT_PROMPT = `When a graph would help understanding, or the student asks for one, draw it with matplotlib using the Python tool: clear title, labelled axes with units, and a grid. Draw each graph once, in its final form. In the answer, call it "the graph" without saying where it appears (not "above" or "below").
+
+When the student asks for a circuit or a labelled diagram, draw it as a real figure with matplotlib rather than a flowchart: standard circuit symbols (zig-zag resistors, battery and capacitor plates, diodes as a triangle with a bar, a circle for sources), clean straight wires, and labels with values. Use the schemdraw library if it is installed, otherwise draw the symbols with matplotlib lines and patches. For a block diagram of a system, draw labelled boxes connected by arrows. Do not add a separate Mermaid concept map for these questions.`;
 
 const NO_PLOT_PROMPT = `You cannot produce images. If a picture would help, use a Mermaid diagram or a small table instead.`;
 

@@ -15,20 +15,20 @@ const STATUS_STYLES: Record<ProviderStatus, { dot: string; label: string }> = {
   unconfigured: { dot: "bg-ink-muted", label: "Not configured" },
 };
 
+/** One line for the sidebar: whether answers are available and how many the student has left. */
 function summary(report: CapacityReport | null): { dot: string; text: string } {
-  if (!report) return { dot: "bg-ink-muted", text: "Checking capacity…" };
+  if (!report) return { dot: "bg-ink-muted", text: "Checking…" };
   const [solver, , vision] = report.providers;
-  if (solver?.status === "ready") {
-    return {
-      dot: "bg-success",
-      text:
-        solver.requestsLeft !== null
-          ? `Online · ${solver.requestsLeft.toLocaleString("en-IN")} requests left today`
-          : "Online",
-    };
+  if (solver?.status !== "ready" && vision?.status !== "ready") {
+    return { dot: "bg-red-500", text: "Busy right now · try again shortly" };
   }
-  if (vision?.status === "ready") return { dot: "bg-warning", text: "Running on backup capacity" };
-  return { dot: "bg-red-500", text: "At capacity · try again shortly" };
+  const dot = solver?.status === "ready" ? "bg-success" : "bg-warning";
+  if (!report.allowance) return { dot, text: "Online" };
+
+  const { usedToday, dailyLimit } = report.allowance;
+  const left = Math.max(0, dailyLimit - usedToday);
+  if (left === 0) return { dot: "bg-warning", text: "Daily limit reached · resets at midnight" };
+  return { dot, text: `Online · ${left} of ${dailyLimit} left today` };
 }
 
 function ProviderRow({ provider }: { provider: ProviderHealth }) {
@@ -55,8 +55,15 @@ function ProviderRow({ provider }: { provider: ProviderHealth }) {
   );
 }
 
-/** Shows remaining free quota before it runs out, refreshed after every answer. */
-export function CapacityIndicator({ refreshKey }: { refreshKey: number }) {
+interface CapacityIndicatorProps {
+  /** Refreshes the numbers when it changes, e.g. after each answer. */
+  refreshKey: number;
+  /** Admins can open the per-model capacity details. */
+  detailed: boolean;
+}
+
+/** Shows whether answers are available and the student's remaining requests for today. */
+export function CapacityIndicator({ refreshKey, detailed }: CapacityIndicatorProps) {
   const [report, setReport] = useState<CapacityReport | null>(null);
   const [open, setOpen] = useState(false);
 
@@ -79,6 +86,16 @@ export function CapacityIndicator({ refreshKey }: { refreshKey: number }) {
   }, [refreshKey]);
 
   const { dot, text } = summary(report);
+  const line = (
+    <>
+      <span className={cn("size-2 shrink-0 rounded-full", dot)} />
+      <span className="flex-1 truncate">{text}</span>
+    </>
+  );
+
+  if (!detailed) {
+    return <p className="flex items-center gap-2 px-2 py-1.5 text-xs text-ink-muted">{line}</p>;
+  }
 
   return (
     <div className="relative">
@@ -88,8 +105,7 @@ export function CapacityIndicator({ refreshKey }: { refreshKey: number }) {
         aria-expanded={open}
         className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-xs text-ink-muted transition-colors hover:bg-subtle hover:text-ink"
       >
-        <span className={cn("size-2 shrink-0 rounded-full", dot)} />
-        <span className="flex-1 truncate">{text}</span>
+        {line}
         <ChevronUp className={cn("size-3.5 transition-transform", !open && "rotate-180")} />
       </button>
       {open && report && (
