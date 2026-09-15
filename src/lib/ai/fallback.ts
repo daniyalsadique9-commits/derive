@@ -1,5 +1,5 @@
 import { aiConfig } from "./config";
-import { coolDownFor, describeError, ResponseTimeoutError } from "./errors";
+import { affectsWholeModel, coolDownFor, describeError, ResponseTimeoutError } from "./errors";
 import type { StreamEvent } from "./events";
 import { renderTurnText } from "./prompts";
 import { streamGemini, toGeminiContents } from "./providers/gemini";
@@ -93,6 +93,20 @@ export function geminiAttempts({
   );
 }
 
+/**
+ * Sets a failed key aside for a while. When the whole model is at fault, such as Gemini's
+ * "high demand", every key for that model is set aside, so no request waits on it again.
+ */
+function coolDownAfter(slot: Slot, error: unknown): void {
+  const duration = coolDownFor(error);
+  const keyCount =
+    slot.provider === "groq" ? aiConfig.groq.keys.length : aiConfig.gemini.keys.length;
+  const slots = affectsWholeModel(error)
+    ? Array.from({ length: keyCount }, (_, keyIndex): Slot => ({ ...slot, keyIndex }))
+    : [slot];
+  for (const each of slots) quota.coolDown(each, duration);
+}
+
 function withTimeout<T>(promise: Promise<T>, ms: number, onTimeout: () => void): Promise<T> {
   let timer: ReturnType<typeof setTimeout> | undefined;
   const timeout = new Promise<never>((_, reject) => {
@@ -121,6 +135,8 @@ export async function* streamFirstAvailable(
 
   for (const attempt of attempts) {
     if (signal.aborted) return null;
+    // Set aside during this request, after its model failed on another key.
+    if (quota.isCoolingDown(attempt.slot)) continue;
 
     const attemptController = new AbortController();
     const events = attempt.run(AbortSignal.any([signal, attemptController.signal]));
@@ -134,7 +150,7 @@ export async function* streamFirstAvailable(
     } catch (error) {
       attemptController.abort();
       if (signal.aborted) return null;
-      quota.coolDown(attempt.slot, coolDownFor(error));
+      coolDownAfter(attempt.slot, error);
       unavailable = true;
       console.warn(
         `[fallback] ${attempt.slot.model} #${attempt.slot.keyIndex + 1}: ${describeError(error)}`,
@@ -159,11 +175,11 @@ export async function* streamFirstAvailable(
     } catch (error) {
       if (signal.aborted) return null;
       console.warn(`[fallback] stream broke on ${attempt.slot.model}: ${describeError(error)}`);
+      coolDownAfter(attempt.slot, error);
+      unavailable = true;
       if (text) {
         // A model that fails partway, for example with "high demand", is replaced by the next
         // one, which writes the answer again from the start.
-        quota.coolDown(attempt.slot, coolDownFor(error));
-        unavailable = true;
         restarts += 1;
         if (restarts > MAX_RESTARTS) {
           yield { type: "error", message: "The answer was interrupted. Please try again." };

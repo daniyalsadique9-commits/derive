@@ -35,10 +35,17 @@ export const aiConfig = {
   },
   gemini: {
     keys: list(process.env.GEMINI_API_KEYS),
+    /**
+     * Tried in order; all of them can run Python and plot graphs. Each model has its own
+     * capacity, so when one reports high demand the next still answers. The slowest to
+     * start is last.
+     */
     models: listOr(process.env.GEMINI_MODELS, [
-      "gemini-3.6-flash",
-      "gemini-3.8-flash",
       "gemini-3.5-flash",
+      "gemini-3.6-flash",
+      "gemini-3-flash-preview",
+      "gemini-3.5-flash-lite",
+      "gemini-3.8-flash",
     ]),
     requestsPerMinute: positiveInt(process.env.GEMINI_RPM, 10),
     requestsPerDay: positiveInt(process.env.GEMINI_RPD, 250),

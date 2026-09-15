@@ -36,14 +36,24 @@ export function coolDownFor(error: unknown): number {
     case 403:
     case 404:
       return 10 * 60_000; // bad key or retired model: don't retry soon
+    case 503:
+      return 60_000; // the model is overloaded ("high demand")
     case 500:
     case 502:
-    case 503:
     case 504:
-      return 30_000; // provider overloaded
+      return 30_000; // provider error
     default:
       return error instanceof ResponseTimeoutError ? 30_000 : 15_000;
   }
+}
+
+/**
+ * True when the failure belongs to the model rather than one API key: an overloaded or
+ * retired model fails the same way on every key.
+ */
+export function affectsWholeModel(error: unknown): boolean {
+  const status = statusOf(error);
+  return status === 503 || status === 404;
 }
 
 export function describeError(error: unknown): string {
