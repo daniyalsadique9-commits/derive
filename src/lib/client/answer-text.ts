@@ -1,6 +1,8 @@
 import { isMermaidLine, startsMermaid } from "@/lib/utils/mermaid-lines";
 
 const TOPIC_COMMENT = /<!--\s*topic:\s*(.+?)\s*-->/i;
+/** Links to image files the model imagines, such as ![graph](plot.png); real graphs arrive separately. */
+const LOCAL_IMAGE_LINK = /!\[[^\]]*\]\((?!https?:|data:)[^)]*\)/g;
 /** Complete comments, plus a half-streamed one at the end of the text. */
 const HTML_COMMENTS = /<!--[\s\S]*?(?:-->|$)/g;
 const CODE_FENCES = /(```[\s\S]*?(?:```|$))/g;
@@ -49,7 +51,7 @@ function convertHtml(segment: string): string {
 }
 
 function normalizeMath(segment: string): string {
-  return convertHtml(segment)
+  return convertHtml(segment.replace(LOCAL_IMAGE_LINK, ""))
     .replace(/\\\[([\s\S]+?)\\\]/g, (_, math: string) => `$$${math}$$`)
     .replace(/\\\(([\s\S]+?)\\\)/g, (_, math: string) => `$${math}$`)
     .replace(

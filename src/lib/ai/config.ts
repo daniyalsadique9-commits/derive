@@ -43,8 +43,8 @@ export const aiConfig = {
     models: listOr(process.env.GEMINI_MODELS, [
       "gemini-3.5-flash",
       "gemini-3.6-flash",
-      "gemini-3-flash-preview",
       "gemini-3.5-flash-lite",
+      "gemini-3-flash-preview",
       "gemini-3.8-flash",
     ]),
     requestsPerMinute: positiveInt(process.env.GEMINI_RPM, 10),

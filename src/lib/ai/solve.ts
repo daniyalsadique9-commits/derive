@@ -33,6 +33,24 @@ function recentTurns(messages: ChatTurn[]): ChatTurn[] {
     .map((turn, index, all) => (index === all.length - 1 ? turn : { ...turn, images: undefined }));
 }
 
+const normalized = (text: string) => text.toLowerCase().replace(/\s+/g, " ").trim();
+
+/**
+ * The same question asked again in a chat is answered afresh and in full. With the earlier
+ * answer in view, models treat a repeat as a follow-up and reply with a short summary.
+ */
+function withoutRepeatedHistory(turns: ChatTurn[]): ChatTurn[] {
+  const latest = turns[turns.length - 1];
+  if (latest?.role !== "user" || (latest.intent ?? "ask") !== "ask" || !latest.content.trim()) {
+    return turns;
+  }
+  const question = normalized(latest.content);
+  const repeated = turns
+    .slice(0, -1)
+    .some((turn) => turn.role === "user" && normalized(turn.content) === question);
+  return repeated ? [latest] : turns;
+}
+
 /** Adds the answer-language reminder to the latest turn, where models notice it most. */
 function withLanguageReminder(turns: ChatTurn[], language: AnswerLanguage): ChatTurn[] {
   const reminder = languageReminder(language);
@@ -85,7 +103,10 @@ export async function* solve(
   signal: AbortSignal,
   options: { verify: boolean },
 ): AsyncGenerator<StreamEvent> {
-  const turns = withLanguageReminder(recentTurns(request.messages), request.language);
+  const turns = withLanguageReminder(
+    withoutRepeatedHistory(recentTurns(request.messages)),
+    request.language,
+  );
   const latest = turns[turns.length - 1];
   const hasAttachments = (latest?.images?.length ?? 0) > 0;
   // Whole devices can't be drawn accurately as a one-loop circuit, and models draw them
